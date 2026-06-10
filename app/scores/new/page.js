@@ -58,6 +58,31 @@ export default async function NewScorePage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
+          Bow type
+          <select name="bow_type" className="rounded border px-3 py-2">
+            <option>Recurve</option>
+            <option>Compound</option>
+            <option>Barebow</option>
+            <option>Longbow</option>
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          Age category
+          <select name="age_category" className="rounded border px-3 py-2">
+            <option value="">— Not set —</option>
+            <option>U12</option>
+            <option>U14</option>
+            <option>U15</option>
+            <option>U16</option>
+            <option>U18</option>
+            <option>Senior</option>
+            <option>50+</option>
+            <option>60+</option>
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
           Status
           <select name="status" className="rounded border px-3 py-2">
             <option>Practice</option>

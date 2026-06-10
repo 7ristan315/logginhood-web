@@ -17,7 +17,7 @@ export default async function ClubPage({ params }) {
 
   const { data: scores } = await supabase
     .from("scores")
-    .select("score, round_name, shot_at, profile_id, profiles(full_name)")
+    .select("score, round_name, shot_at, bow_type, age_category, classification, profile_id, profiles(full_name)")
     .eq("club_id", id)
     .order("score", { ascending: false })
     .limit(20);
@@ -62,6 +62,9 @@ export default async function ClubPage({ params }) {
                 <th className="py-2">Archer</th>
                 <th className="py-2">Round</th>
                 <th className="py-2">Score</th>
+                <th className="py-2">Bow</th>
+                <th className="py-2">Age cat.</th>
+                <th className="py-2">Class</th>
                 <th className="py-2">Date</th>
               </tr>
             </thead>
@@ -71,6 +74,9 @@ export default async function ClubPage({ params }) {
                   <td className="py-2">{s.profiles?.full_name ?? "Unnamed archer"}</td>
                   <td className="py-2">{s.round_name}</td>
                   <td className="py-2">{s.score}</td>
+                  <td className="py-2">{s.bow_type ?? "—"}</td>
+                  <td className="py-2">{s.age_category ?? "—"}</td>
+                  <td className="py-2">{s.classification ?? "—"}</td>
                   <td className="py-2">{s.shot_at}</td>
                 </tr>
               ))}

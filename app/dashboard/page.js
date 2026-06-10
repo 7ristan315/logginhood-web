@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
   const { data: scores } = await supabase
     .from("scores")
-    .select("id, round_name, score, golds, shot_at, status")
+    .select("id, round_name, score, golds, shot_at, status, bow_type, age_category, classification")
     .eq("profile_id", user.id)
     .order("shot_at", { ascending: false });
 
@@ -42,6 +42,9 @@ export default async function DashboardPage() {
               <th className="py-2">Round</th>
               <th className="py-2">Score</th>
               <th className="py-2">Golds</th>
+              <th className="py-2">Bow</th>
+              <th className="py-2">Age cat.</th>
+              <th className="py-2">Class</th>
               <th className="py-2">Status</th>
             </tr>
           </thead>
@@ -52,6 +55,9 @@ export default async function DashboardPage() {
                 <td className="py-2">{s.round_name}</td>
                 <td className="py-2">{s.score}</td>
                 <td className="py-2">{s.golds ?? "—"}</td>
+                <td className="py-2">{s.bow_type ?? "—"}</td>
+                <td className="py-2">{s.age_category ?? "—"}</td>
+                <td className="py-2">{s.classification ?? "—"}</td>
                 <td className="py-2">{s.status}</td>
               </tr>
             ))}

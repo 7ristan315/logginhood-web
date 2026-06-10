@@ -19,6 +19,7 @@ export async function addScore(formData) {
 
   const clubId = formData.get("club_id") || null;
   const golds = formData.get("golds");
+  const ageCategory = formData.get("age_category");
 
   await supabase.from("scores").insert({
     profile_id: user.id,
@@ -28,7 +29,8 @@ export async function addScore(formData) {
     golds: golds ? Number(golds) : null,
     shot_at: formData.get("shot_at"),
     status: formData.get("status") || "Practice",
-    bow_type: profile?.bow_type ?? null,
+    bow_type: formData.get("bow_type") || profile?.bow_type || null,
+    age_category: ageCategory || null,
   });
 
   revalidatePath("/dashboard");
