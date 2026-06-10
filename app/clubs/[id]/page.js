@@ -1,0 +1,83 @@
+import { createClient } from "@/lib/supabase/server";
+
+export default async function ClubPage({ params }) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: club } = await supabase
+    .from("clubs")
+    .select("id, name, location")
+    .eq("id", id)
+    .single();
+
+  const { data: members } = await supabase
+    .from("club_members")
+    .select("profile_id, role, profiles(full_name)")
+    .eq("club_id", id);
+
+  const { data: scores } = await supabase
+    .from("scores")
+    .select("score, round_name, shot_at, profile_id, profiles(full_name)")
+    .eq("club_id", id)
+    .order("score", { ascending: false })
+    .limit(20);
+
+  if (!club) {
+    return (
+      <main className="mx-auto max-w-2xl p-8">
+        <p>Club not found.</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <div>
+        <h1 className="text-2xl font-semibold">{club.name}</h1>
+        {club.location && <p className="text-gray-600">{club.location}</p>}
+      </div>
+
+      <section>
+        <h2 className="mb-2 font-medium">Members ({members?.length ?? 0})</h2>
+        <ul className="flex flex-col gap-1 text-sm">
+          {members?.map((m) => (
+            <li key={m.profile_id}>
+              {m.profiles?.full_name ?? "Unnamed archer"}
+              {m.role === "admin" && (
+                <span className="ml-2 text-xs text-gray-500">admin</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="mb-2 font-medium">Leaderboard (top scores)</h2>
+        {!scores?.length ? (
+          <p className="text-sm text-gray-600">No scores logged for this club yet.</p>
+        ) : (
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="py-2">Archer</th>
+                <th className="py-2">Round</th>
+                <th className="py-2">Score</th>
+                <th className="py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scores.map((s, i) => (
+                <tr key={i} className="border-b">
+                  <td className="py-2">{s.profiles?.full_name ?? "Unnamed archer"}</td>
+                  <td className="py-2">{s.round_name}</td>
+                  <td className="py-2">{s.score}</td>
+                  <td className="py-2">{s.shot_at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </main>
+  );
+}
