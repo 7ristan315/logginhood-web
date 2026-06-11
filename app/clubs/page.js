@@ -31,7 +31,7 @@ export default async function ClubsPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {clubs.map((club) => (
-            <li key={club.id} className="flex items-center justify-between rounded border p-3">
+            <li key={club.id} className="flex items-center justify-between rounded-lg border p-3 hover:border-accent transition-colors">
               <div>
                 <Link href={`/clubs/${club.id}`} className="font-medium underline">
                   {club.name}
@@ -43,7 +43,7 @@ export default async function ClubsPage() {
               {user && !memberClubIds.has(club.id) && (
                 <form action={joinClub}>
                   <input type="hidden" name="clubId" value={club.id} />
-                  <button type="submit" className="rounded border px-3 py-1 text-sm">
+                  <button type="submit" className="btn-secondary text-xs">
                     Join
                   </button>
                 </form>
@@ -57,20 +57,20 @@ export default async function ClubsPage() {
       )}
 
       {user && (
-        <form action={createClub} className="flex flex-col gap-3 rounded border p-4">
+        <form action={createClub} className="flex flex-col gap-3 rounded-lg border p-4 bg-accent-light">
           <h2 className="font-medium">Create a club</h2>
           <input
             name="name"
             placeholder="Club name"
             required
-            className="rounded border px-3 py-2"
+            className="input-field"
           />
           <input
             name="location"
             placeholder="Location (optional)"
-            className="rounded border px-3 py-2"
+            className="input-field"
           />
-          <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">
+          <button type="submit" className="btn-primary">
             Create
           </button>
         </form>

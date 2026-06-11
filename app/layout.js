@@ -30,25 +30,25 @@ export default async function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="flex items-center justify-between border-b px-6 py-3">
-          <Link href="/" className="font-semibold">
-            Logginhood
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur">
+          <Link href="/" className="text-lg font-bold tracking-tight text-accent">
+            🏹 Logginhood
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link href="/clubs">Clubs</Link>
+            <Link href="/clubs" className="hover:text-accent">Clubs</Link>
             {user ? (
               <>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/dashboard" className="hover:text-accent">Dashboard</Link>
                 <form action="/auth/signout" method="post">
-                  <button type="submit" className="underline">
+                  <button type="submit" className="underline hover:text-accent">
                     Log out
                   </button>
                 </form>
               </>
             ) : (
               <>
-                <Link href="/login">Log in</Link>
-                <Link href="/signup">Sign up</Link>
+                <Link href="/login" className="hover:text-accent">Log in</Link>
+                <Link href="/signup" className="btn-primary">Sign up</Link>
               </>
             )}
           </nav>

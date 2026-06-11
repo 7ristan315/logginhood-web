@@ -21,7 +21,7 @@ export default async function NewScorePage() {
       <form action={addScore} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           Round
-          <select name="round_name" required className="rounded border px-3 py-2">
+          <select name="round_name" required className="input-field">
             {roundNames().map((r) => (
               <option key={r} value={r}>
                 {r}
@@ -37,13 +37,13 @@ export default async function NewScorePage() {
             name="score"
             required
             min={0}
-            className="rounded border px-3 py-2"
+            className="input-field"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
           Golds (optional)
-          <input type="number" name="golds" min={0} className="rounded border px-3 py-2" />
+          <input type="number" name="golds" min={0} className="input-field" />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
@@ -53,13 +53,13 @@ export default async function NewScorePage() {
             name="shot_at"
             required
             defaultValue={new Date().toISOString().slice(0, 10)}
-            className="rounded border px-3 py-2"
+            className="input-field"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
           Bow type
-          <select name="bow_type" className="rounded border px-3 py-2">
+          <select name="bow_type" className="input-field">
             <option>Recurve</option>
             <option>Compound</option>
             <option>Barebow</option>
@@ -69,7 +69,7 @@ export default async function NewScorePage() {
 
         <label className="flex flex-col gap-1 text-sm">
           Age category
-          <select name="age_category" className="rounded border px-3 py-2">
+          <select name="age_category" className="input-field">
             <option value="">— Not set —</option>
             <option>U12</option>
             <option>U14</option>
@@ -84,7 +84,7 @@ export default async function NewScorePage() {
 
         <label className="flex flex-col gap-1 text-sm">
           Status
-          <select name="status" className="rounded border px-3 py-2">
+          <select name="status" className="input-field">
             <option>Practice</option>
             <option>Competition</option>
             <option>UKRS</option>
@@ -95,7 +95,7 @@ export default async function NewScorePage() {
         {clubs.length > 0 && (
           <label className="flex flex-col gap-1 text-sm">
             Club (optional)
-            <select name="club_id" className="rounded border px-3 py-2">
+            <select name="club_id" className="input-field">
               <option value="">— None —</option>
               {clubs.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -106,7 +106,7 @@ export default async function NewScorePage() {
           </label>
         )}
 
-        <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">
+        <button type="submit" className="btn-primary">
           Save score
         </button>
       </form>

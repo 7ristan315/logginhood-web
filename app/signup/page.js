@@ -53,7 +53,7 @@ export default function SignupPage() {
           required
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="rounded border px-3 py-2"
+          className="input-field"
         />
         <input
           type="email"
@@ -61,7 +61,7 @@ export default function SignupPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded border px-3 py-2"
+          className="input-field"
         />
         <input
           type="password"
@@ -70,13 +70,13 @@ export default function SignupPage() {
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="rounded border px-3 py-2"
+          className="input-field"
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           {loading ? "Signing up..." : "Sign up"}
         </button>

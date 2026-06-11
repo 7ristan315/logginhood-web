@@ -25,7 +25,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold">
           Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}
         </h1>
-        <Link href="/scores/new" className="rounded bg-black px-3 py-2 text-sm text-white">
+        <Link href="/scores/new" className="btn-primary">
           Add a score
         </Link>
       </div>

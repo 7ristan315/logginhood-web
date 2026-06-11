@@ -32,7 +32,7 @@ export default async function ClubPage({ params }) {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <div>
+      <div className="border-l-4 border-accent pl-4">
         <h1 className="text-2xl font-semibold">{club.name}</h1>
         {club.location && <p className="text-gray-600">{club.location}</p>}
       </div>
