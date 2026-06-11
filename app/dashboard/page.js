@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import TabNav from "@/components/TabNav";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
+      <TabNav />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">
           Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}
