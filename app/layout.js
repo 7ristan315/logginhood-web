@@ -45,6 +45,14 @@ export default async function RootLayout({ children }) {
                   <Link href="/progress" className="hover:text-accent">Progress</Link>
                   <Link href="/profile" className="hover:text-accent">Profile</Link>
                   <Link href="/settings" className="hover:text-accent">Settings</Link>
+                  <a
+                    href="https://logginhood.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary"
+                  >
+                    Score a round ↗
+                  </a>
                   <form action="/auth/signout" method="post">
                     <button type="submit" className="underline hover:text-accent">
                       Log out
