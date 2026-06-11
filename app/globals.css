@@ -28,6 +28,64 @@
   }
 }
 
+:root.light {
+  --background: #ffffff;
+  --foreground: #171717;
+  --accent: #2f6f4f;
+  --accent-foreground: #ffffff;
+  --accent-light: #e8f3ed;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --accent: #4f9c75;
+  --accent-foreground: #06150f;
+  --accent-light: #15281f;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--accent-light);
+  margin-bottom: 1.25rem;
+}
+
+.tab-nav a,
+.tab-nav button {
+  white-space: nowrap;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  opacity: 0.7;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.tab-nav a:hover,
+.tab-nav button:hover {
+  opacity: 1;
+  background: var(--accent-light);
+}
+
+.tab-nav a.active,
+.tab-nav button.active {
+  opacity: 1;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.card {
+  background: var(--accent-light);
+  border-radius: 0.75rem;
+  padding: 0.9rem 1.1rem;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

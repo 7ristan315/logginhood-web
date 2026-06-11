@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import TabNav from "@/components/TabNav";
 import { updateProfile } from "./actions";
 
 export default async function ProfilePage() {
@@ -17,6 +18,7 @@ export default async function ProfilePage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
+      <TabNav />
       <h1 className="text-2xl font-semibold">Your profile</h1>
       <form action={updateProfile} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
