@@ -39,6 +39,7 @@ export default async function RootLayout({ children }) {
             {user ? (
               <>
                 <Link href="/dashboard" className="hover:text-accent">Dashboard</Link>
+                <Link href="/profile" className="hover:text-accent">Profile</Link>
                 <form action="/auth/signout" method="post">
                   <button type="submit" className="underline hover:text-accent">
                     Log out
