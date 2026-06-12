@@ -12,9 +12,17 @@ export async function createClub(formData) {
 
   const name = formData.get("name");
   const location = formData.get("location") || null;
+  const governingBodyId = formData.get("governingBodyId") || null;
+  const affiliationNumber = formData.get("affiliationNumber") || null;
   if (!name) return;
 
-  await supabase.from("clubs").insert({ name, location, created_by: user.id });
+  await supabase.from("clubs").insert({
+    name,
+    location,
+    created_by: user.id,
+    governing_body_id: governingBodyId,
+    affiliation_number: affiliationNumber,
+  });
   revalidatePath("/clubs");
 }
 

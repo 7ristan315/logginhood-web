@@ -9,7 +9,7 @@ export default async function ClubPage({ params }) {
 
   const { data: club } = await supabase
     .from("clubs")
-    .select("id, name, location")
+    .select("id, name, location, status, affiliation_number, governing_bodies(name)")
     .eq("id", id)
     .single();
 
@@ -37,8 +37,21 @@ export default async function ClubPage({ params }) {
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
       <div className="flex flex-wrap items-end justify-between gap-2 border-l-4 border-accent pl-4">
         <div>
-          <h1 className="text-2xl font-semibold">{club.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold">{club.name}</h1>
+            {club.status === "verified" ? (
+              <Badge variant="success">✅ Verified</Badge>
+            ) : club.status === "pending" ? (
+              <Badge variant="warning">Pending review</Badge>
+            ) : null}
+          </div>
           {club.location && <p className="text-gray-600">{club.location}</p>}
+          {club.governing_bodies?.name && (
+            <p className="text-sm opacity-60">
+              {club.governing_bodies.name}
+              {club.affiliation_number && ` · Affiliation #${club.affiliation_number}`}
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <Link href={`/clubs/${club.id}/members`} className="btn-secondary text-sm">

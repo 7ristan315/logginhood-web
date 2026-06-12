@@ -30,6 +30,16 @@ export default async function RootLayout({ children }) {
   const messages = getMessages();
   const t = (key) => translate(messages, key);
 
+  let isPlatformAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("platform_admin")
+      .eq("id", user.id)
+      .single();
+    isPlatformAdmin = !!profile?.platform_admin;
+  }
+
   return (
     <html
       lang="en"
@@ -50,6 +60,9 @@ export default async function RootLayout({ children }) {
                   <Link href="/progress" className="hover:text-accent">{t("nav.progress")}</Link>
                   <Link href="/profile" className="hover:text-accent">{t("nav.profile")}</Link>
                   <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
+                  {isPlatformAdmin && (
+                    <Link href="/admin/clubs" className="hover:text-accent">Admin</Link>
+                  )}
                   <Button href="https://logginhood.vercel.app" target="_blank" rel="noreferrer" size="sm">
                     {t("nav.scoreRound")}
                   </Button>
