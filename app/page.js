@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, Button, Card, Container, EmptyState, PageHeader } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
+import { roleLabel } from "@/lib/permissions";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -88,7 +89,7 @@ export default async function Home() {
                 <Link href={`/clubs/${membership.clubs.id}`} className="font-medium hover:text-accent">
                   {membership.clubs.name}
                 </Link>
-                {membership.role && <Badge>{membership.role}</Badge>}
+                {membership.role && membership.role !== "member" && <Badge>{roleLabel(membership.role)}</Badge>}
               </div>
             ) : (
               <EmptyState

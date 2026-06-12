@@ -6,3 +6,4 @@ export { default as Spinner } from "./Spinner";
 export { default as Skeleton, SkeletonText } from "./Skeleton";
 export { default as PageHeader } from "./PageHeader";
 export { default as Container } from "./Container";
+export { default as RoleGate } from "./RoleGate";

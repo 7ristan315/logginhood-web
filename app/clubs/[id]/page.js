@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Badge } from "@/components/ui";
+import { roleLabel } from "@/lib/permissions";
 
 export default async function ClubPage({ params }) {
   const { id } = await params;
@@ -38,20 +40,23 @@ export default async function ClubPage({ params }) {
           <h1 className="text-2xl font-semibold">{club.name}</h1>
           {club.location && <p className="text-gray-600">{club.location}</p>}
         </div>
-        <Link href={`/clubs/${club.id}/records`} className="btn-secondary text-sm">
-          🏆 Records
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/clubs/${club.id}/members`} className="btn-secondary text-sm">
+            🧑‍🤝‍🧑 Members
+          </Link>
+          <Link href={`/clubs/${club.id}/records`} className="btn-secondary text-sm">
+            🏆 Records
+          </Link>
+        </div>
       </div>
 
       <section>
         <h2 className="mb-2 font-medium">Members ({members?.length ?? 0})</h2>
         <ul className="flex flex-col gap-1 text-sm">
           {members?.map((m) => (
-            <li key={m.profile_id}>
+            <li key={m.profile_id} className="flex items-center gap-2">
               {m.profiles?.full_name ?? "Unnamed archer"}
-              {m.role === "admin" && (
-                <span className="ml-2 text-xs text-gray-500">admin</span>
-              )}
+              {m.role !== "member" && <Badge variant={m.role === "chairman" ? "info" : "default"}>{roleLabel(m.role)}</Badge>}
             </li>
           ))}
         </ul>
