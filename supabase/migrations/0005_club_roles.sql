@@ -48,3 +48,10 @@ $$ language plpgsql security definer set search_path = public;
 create trigger on_club_created
   after insert on public.clubs
   for each row execute procedure public.handle_new_club();
+
+-- 6. Backfill: make existing clubs' creators their chairman too.
+insert into public.club_members (club_id, profile_id, role)
+select id, created_by, 'chairman'
+from public.clubs
+where created_by is not null
+on conflict (club_id, profile_id) do update set role = 'chairman';
