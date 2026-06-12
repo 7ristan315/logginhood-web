@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "clubs": "Clubs",
+    "dashboard": "Dashboard",
+    "history": "History",
+    "progress": "Progress",
+    "profile": "Profile",
+    "settings": "Settings",
+    "scoreRound": "Score a round ↗",
+    "logOut": "Log out",
+    "logIn": "Log in",
+    "signUp": "Sign up"
+  },
+  "home": {
+    "loggedOut": {
+      "title": "🏹 Logginhood",
+      "subtitle": "The hub for archers, clubs, and scores. Track your progress, join a club, and compare results with archers around the world.",
+      "getStarted": "Get started",
+      "browseClubs": "Browse clubs"
+    },
+    "loggedIn": {
+      "welcomeBack": "Welcome back, {name}",
+      "yourClub": "Your club",
+      "noClub": {
+        "title": "You're not in a club yet",
+        "description": "Join a club to compare scores, appear on leaderboards, and take part in tournaments.",
+        "action": "Browse clubs"
+      },
+      "recentScores": "Recent scores",
+      "noScores": {
+        "title": "No scores logged yet",
+        "description": "Log your first round to start tracking your progress.",
+        "action": "Log a round"
+      },
+      "viewAll": "View all",
+      "personalBest": "Personal best",
+      "quickLinks": "Quick links"
+    }
+  }
+}

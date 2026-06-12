@@ -3,6 +3,8 @@ import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import ThemeProvider from "@/components/ThemeProvider";
+import { Button } from "@/components/ui";
+import { getMessages, translate } from "@/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +27,9 @@ export default async function RootLayout({ children }) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const messages = getMessages();
+  const t = (key) => translate(messages, key);
+
   return (
     <html
       lang="en"
@@ -37,32 +42,27 @@ export default async function RootLayout({ children }) {
               🏹 Logginhood
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/clubs" className="hover:text-accent">Clubs</Link>
+              <Link href="/clubs" className="hover:text-accent">{t("nav.clubs")}</Link>
               {user ? (
                 <>
-                  <Link href="/dashboard" className="hover:text-accent">Dashboard</Link>
-                  <Link href="/history" className="hover:text-accent">History</Link>
-                  <Link href="/progress" className="hover:text-accent">Progress</Link>
-                  <Link href="/profile" className="hover:text-accent">Profile</Link>
-                  <Link href="/settings" className="hover:text-accent">Settings</Link>
-                  <a
-                    href="https://logginhood.vercel.app"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-primary"
-                  >
-                    Score a round ↗
-                  </a>
+                  <Link href="/dashboard" className="hover:text-accent">{t("nav.dashboard")}</Link>
+                  <Link href="/history" className="hover:text-accent">{t("nav.history")}</Link>
+                  <Link href="/progress" className="hover:text-accent">{t("nav.progress")}</Link>
+                  <Link href="/profile" className="hover:text-accent">{t("nav.profile")}</Link>
+                  <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
+                  <Button href="https://logginhood.vercel.app" target="_blank" rel="noreferrer" size="sm">
+                    {t("nav.scoreRound")}
+                  </Button>
                   <form action="/auth/signout" method="post">
                     <button type="submit" className="underline hover:text-accent">
-                      Log out
+                      {t("nav.logOut")}
                     </button>
                   </form>
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="hover:text-accent">Log in</Link>
-                  <Link href="/signup" className="btn-primary">Sign up</Link>
+                  <Link href="/login" className="hover:text-accent">{t("nav.logIn")}</Link>
+                  <Button href="/signup" size="sm">{t("nav.signUp")}</Button>
                 </>
               )}
             </nav>
