@@ -16,7 +16,23 @@ export default async function ClubPage({ params }) {
   const { data: members } = await supabase
     .from("club_members")
     .select("profile_id, role, profiles(full_name)")
-    .eq("club_id", id);
+    .eq("club_id", id)
+    .eq("status", "approved");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const myRole = members?.find((m) => m.profile_id === user?.id)?.role;
+  let pendingCount = 0;
+  if (myRole === "chairman") {
+    const { count } = await supabase
+      .from("club_members")
+      .select("profile_id", { count: "exact", head: true })
+      .eq("club_id", id)
+      .eq("status", "pending");
+    pendingCount = count ?? 0;
+  }
 
   const { data: scores } = await supabase
     .from("scores")
@@ -60,6 +76,11 @@ export default async function ClubPage({ params }) {
           <Link href={`/clubs/${club.id}/records`} className="btn-secondary text-sm">
             🏆 Records
           </Link>
+          {myRole === "chairman" && (
+            <Link href={`/clubs/${club.id}/applications`} className="btn-secondary text-sm">
+              📋 Applications{pendingCount > 0 && ` (${pendingCount})`}
+            </Link>
+          )}
         </div>
       </div>
 

@@ -21,6 +21,7 @@ export default async function ClubMembersPage({ params }) {
     .from("club_members")
     .select("profile_id, role, joined_at, profiles(full_name)")
     .eq("club_id", id)
+    .eq("status", "approved")
     .order("joined_at");
 
   const myRole = members?.find((m) => m.profile_id === user?.id)?.role;
@@ -31,9 +32,16 @@ export default async function ClubMembersPage({ params }) {
       <PageHeader
         title={`${club.name} — Members`}
         actions={
-          <Link href={`/clubs/${club.id}`} className="text-sm hover:text-accent">
-            &larr; Back to club
-          </Link>
+          <div className="flex items-center gap-4">
+            {canManage && (
+              <Link href={`/clubs/${club.id}/applications`} className="text-sm hover:text-accent">
+                📋 Applications
+              </Link>
+            )}
+            <Link href={`/clubs/${club.id}`} className="text-sm hover:text-accent">
+              &larr; Back to club
+            </Link>
+          </div>
         }
       />
 

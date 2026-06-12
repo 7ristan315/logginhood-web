@@ -18,12 +18,14 @@ export default async function ClubsPage() {
   ]);
 
   let memberClubIds = new Set();
+  let pendingClubIds = new Set();
   if (user) {
     const { data: memberships } = await supabase
       .from("club_members")
-      .select("club_id")
+      .select("club_id, status")
       .eq("profile_id", user.id);
-    memberClubIds = new Set((memberships ?? []).map((m) => m.club_id));
+    memberClubIds = new Set((memberships ?? []).filter((m) => m.status === "approved").map((m) => m.club_id));
+    pendingClubIds = new Set((memberships ?? []).filter((m) => m.status === "pending").map((m) => m.club_id));
   }
 
   return (
@@ -54,13 +56,16 @@ export default async function ClubsPage() {
                   <p className="text-xs opacity-60">{club.governing_bodies.name}</p>
                 )}
               </div>
-              {user && !memberClubIds.has(club.id) && (
+              {user && !memberClubIds.has(club.id) && !pendingClubIds.has(club.id) && (
                 <form action={joinClub}>
                   <input type="hidden" name="clubId" value={club.id} />
                   <button type="submit" className="btn-secondary text-xs">
                     Join
                   </button>
                 </form>
+              )}
+              {user && pendingClubIds.has(club.id) && (
+                <span className="text-sm text-gray-500">Application pending</span>
               )}
               {user && memberClubIds.has(club.id) && (
                 <span className="text-sm text-gray-500">Member</span>
@@ -76,6 +81,10 @@ export default async function ClubsPage() {
           <p className="text-sm opacity-70">
             New clubs start as <strong>pending</strong> until reviewed by a platform admin. You&rsquo;ll become its
             chairman once approved.
+          </p>
+          <p className="text-sm opacity-70">
+            If your club has an official email/domain, add it below &mdash; if it matches your account email, your
+            chairman application can be approved faster.
           </p>
           <input
             name="name"
@@ -99,6 +108,12 @@ export default async function ClubsPage() {
           <input
             name="affiliationNumber"
             placeholder="Affiliation number (optional)"
+            className="input-field"
+          />
+          <input
+            name="officialEmail"
+            type="email"
+            placeholder="Official club email/domain (optional)"
             className="input-field"
           />
           <button type="submit" className="btn-primary">

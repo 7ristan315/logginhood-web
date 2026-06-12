@@ -21,8 +21,10 @@ export default async function AdminClubsPage() {
 
   const { data: clubs } = await supabase
     .from("clubs")
-    .select("id, name, location, affiliation_number, status, governing_bodies(name), profiles!clubs_created_by_fkey(full_name)")
+    .select("id, name, location, affiliation_number, official_email, status, governing_bodies(name), profiles!clubs_created_by_fkey(full_name, email)")
     .order("created_at", { ascending: false });
+
+  const emailDomain = (email) => email?.split("@")[1]?.toLowerCase();
 
   const pending = clubs?.filter((c) => c.status === "pending") ?? [];
   const reviewed = clubs?.filter((c) => c.status !== "pending") ?? [];
@@ -36,7 +38,11 @@ export default async function AdminClubsPage() {
           <EmptyState icon="✅" title="Nothing to review" description="All proposed clubs have been reviewed." />
         ) : (
           <ul className="flex flex-col gap-3">
-            {pending.map((club) => (
+            {pending.map((club) => {
+              const proposerDomain = emailDomain(club.profiles?.email);
+              const officialDomain = emailDomain(club.official_email);
+              const domainMatch = officialDomain && proposerDomain === officialDomain;
+              return (
               <li key={club.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-accent-light pb-3 last:border-none last:pb-0">
                 <div>
                   <Link href={`/clubs/${club.id}`} className="font-medium hover:text-accent">
@@ -48,6 +54,21 @@ export default async function AdminClubsPage() {
                     {club.affiliation_number && ` · Affiliation #${club.affiliation_number}`}
                     {" · proposed by "}
                     {club.profiles?.full_name ?? "Unknown"}
+                    {club.profiles?.email && ` (${club.profiles.email})`}
+                  </p>
+                  <p className="text-xs opacity-60">
+                    {club.official_email ? (
+                      <>
+                        Official email: {club.official_email}{" "}
+                        {domainMatch ? (
+                          <Badge variant="success">✅ Domain matches</Badge>
+                        ) : (
+                          <Badge variant="warning">Domain mismatch</Badge>
+                        )}
+                      </>
+                    ) : (
+                      "No official email given"
+                    )}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -67,7 +88,8 @@ export default async function AdminClubsPage() {
                   </form>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </Card>

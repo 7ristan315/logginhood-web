@@ -27,9 +27,34 @@ export async function reviewClub(formData) {
   const decision = formData.get("decision");
   if (!clubId || !["verified", "rejected"].includes(decision)) return;
 
-  await supabase.from("clubs").update({ status: decision }).eq("id", clubId);
+  const { data: club } = await supabase
+    .from("clubs")
+    .update({ status: decision })
+    .eq("id", clubId)
+    .select("created_by")
+    .single();
+
+  if (club?.created_by) {
+    if (decision === "verified") {
+      await supabase
+        .from("club_members")
+        .update({ status: "approved" })
+        .eq("club_id", clubId)
+        .eq("profile_id", club.created_by)
+        .eq("role", "chairman");
+    } else {
+      await supabase
+        .from("club_members")
+        .delete()
+        .eq("club_id", clubId)
+        .eq("profile_id", club.created_by)
+        .eq("role", "chairman")
+        .eq("status", "pending");
+    }
+  }
 
   revalidatePath("/admin/clubs");
   revalidatePath("/clubs");
   revalidatePath(`/clubs/${clubId}`);
+  revalidatePath(`/clubs/${clubId}/members`);
 }
