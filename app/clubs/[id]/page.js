@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ClubPage({ params }) {
@@ -32,9 +33,14 @@ export default async function ClubPage({ params }) {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <div className="border-l-4 border-accent pl-4">
-        <h1 className="text-2xl font-semibold">{club.name}</h1>
-        {club.location && <p className="text-gray-600">{club.location}</p>}
+      <div className="flex flex-wrap items-end justify-between gap-2 border-l-4 border-accent pl-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{club.name}</h1>
+          {club.location && <p className="text-gray-600">{club.location}</p>}
+        </div>
+        <Link href={`/clubs/${club.id}/records`} className="btn-secondary text-sm">
+          🏆 Records
+        </Link>
       </div>
 
       <section>
