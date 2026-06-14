@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { normPct } from "@/lib/rounds";
-import TabNav from "@/components/TabNav";
 
 export default async function HistoryPage() {
   const supabase = await createClient();
@@ -17,7 +16,6 @@ export default async function HistoryPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-4 p-8">
-      <TabNav />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">History</h1>
         <Link href="/scores/new" className="btn-primary">

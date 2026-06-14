@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import TabNav from "@/components/TabNav";
 import ThemeSettings from "@/components/ThemeSettings";
 import { updateClubUrl } from "./actions";
 
@@ -17,7 +16,6 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
-      <TabNav />
       <h1 className="text-2xl font-semibold">Settings</h1>
 
       <ThemeSettings />

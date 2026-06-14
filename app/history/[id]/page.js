@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ROUNDS, maxScore, normPct } from "@/lib/rounds";
-import TabNav from "@/components/TabNav";
 
 export default async function HistoryDetailPage({ params }) {
   const { id } = await params;
@@ -26,7 +25,6 @@ export default async function HistoryDetailPage({ params }) {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
-      <TabNav />
       <Link href="/history" className="text-sm hover:text-accent">&larr; Back to history</Link>
       <h1 className="text-2xl font-semibold">{s.round_name}</h1>
       <p className="text-sm opacity-70">{s.shot_at} · {s.status}</p>
