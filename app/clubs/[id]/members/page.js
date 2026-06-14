@@ -24,8 +24,14 @@ export default async function ClubMembersPage({ params }) {
     .eq("status", "approved")
     .order("joined_at");
 
+  let isPlatformAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("platform_admin").eq("id", user.id).single();
+    isPlatformAdmin = !!profile?.platform_admin;
+  }
+
   const myRole = members?.find((m) => m.profile_id === user?.id)?.role;
-  const canManage = can(myRole, "manageMembers");
+  const canManage = can(myRole, "manageMembers") || isPlatformAdmin;
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">

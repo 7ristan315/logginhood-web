@@ -110,6 +110,9 @@ export default async function AdminClubsPage() {
                   <Badge variant={club.status === "verified" ? "success" : "danger"}>
                     {club.status === "verified" ? "✅ Verified" : "Rejected"}
                   </Badge>
+                  <Link href={`/clubs/${club.id}/members`} className="text-sm hover:text-accent">
+                    Members
+                  </Link>
                   <DeleteClubButton clubId={club.id} clubName={club.name} />
                 </div>
               </li>
