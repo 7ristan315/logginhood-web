@@ -58,3 +58,17 @@ export async function reviewClub(formData) {
   revalidatePath(`/clubs/${clubId}`);
   revalidatePath(`/clubs/${clubId}/members`);
 }
+
+export async function deleteClub(formData) {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if (!admin) return;
+
+  const clubId = formData.get("clubId");
+  if (!clubId) return;
+
+  await supabase.from("clubs").delete().eq("id", clubId);
+
+  revalidatePath("/admin/clubs");
+  revalidatePath("/clubs");
+}

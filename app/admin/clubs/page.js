@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import { reviewClub } from "./actions";
+import DeleteClubButton from "./delete-button";
 
 export default async function AdminClubsPage() {
   const supabase = await createClient();
@@ -86,6 +87,7 @@ export default async function AdminClubsPage() {
                       Reject
                     </button>
                   </form>
+                  <DeleteClubButton clubId={club.id} clubName={club.name} />
                 </div>
               </li>
               );
@@ -104,9 +106,12 @@ export default async function AdminClubsPage() {
                 <Link href={`/clubs/${club.id}`} className="hover:text-accent">
                   {club.name}
                 </Link>
-                <Badge variant={club.status === "verified" ? "success" : "danger"}>
-                  {club.status === "verified" ? "✅ Verified" : "Rejected"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={club.status === "verified" ? "success" : "danger"}>
+                    {club.status === "verified" ? "✅ Verified" : "Rejected"}
+                  </Badge>
+                  <DeleteClubButton clubId={club.id} clubName={club.name} />
+                </div>
               </li>
             ))}
           </ul>
