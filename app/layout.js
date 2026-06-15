@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
@@ -49,8 +50,9 @@ export default async function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur">
-            <Link href="/" className="text-lg font-bold tracking-tight text-accent">
-              🏹 Logginhood
+            <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-accent">
+              <Image src="/brand/logo-icon.png" alt="" width={32} height={32} className="rounded-sm" priority />
+              Logginhood
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               {user ? (
