@@ -25,7 +25,9 @@ export default function SidebarNav({ messages }) {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-              active ? "bg-accent-light font-semibold text-accent" : "hover:bg-accent-light"
+              active
+                ? "bg-accent-light font-semibold text-foreground border-l-2 border-accent"
+                : "border-l-2 border-transparent hover:bg-accent-light hover:text-foreground"
             }`}
           >
             <span aria-hidden="true">{item.icon}</span>
