@@ -5,6 +5,7 @@ import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import { can, roleLabel } from "@/lib/permissions";
 import { updateMemberRole, removeMember } from "./actions";
 import RoleSelect from "./RoleSelect";
+import EmailMembersButton from "./EmailMembersButton";
 
 export default async function ClubMembersPage({ params }) {
   const { id } = await params;
@@ -19,7 +20,7 @@ export default async function ClubMembersPage({ params }) {
 
   const { data: members } = await supabase
     .from("club_members")
-    .select("profile_id, role, joined_at, profiles(full_name)")
+    .select("profile_id, role, joined_at, profiles(full_name, email)")
     .eq("club_id", id)
     .eq("status", "approved")
     .order("joined_at");
@@ -32,6 +33,8 @@ export default async function ClubMembersPage({ params }) {
 
   const myRole = members?.find((m) => m.profile_id === user?.id)?.role;
   const canManage = can(myRole, "manageMembers") || isPlatformAdmin;
+  const isElevated = (myRole && myRole !== "member") || isPlatformAdmin;
+  const memberEmails = (members ?? []).map((m) => m.profiles?.email).filter(Boolean);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-8">
@@ -39,6 +42,7 @@ export default async function ClubMembersPage({ params }) {
         title={`${club.name} — Members`}
         actions={
           <div className="flex items-center gap-4">
+            {isElevated && <EmailMembersButton emails={memberEmails} clubName={club.name} />}
             {canManage && (
               <Link href={`/clubs/${club.id}/applications`} className="text-sm hover:text-accent">
                 📋 Applications
