@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import ThemeProvider from "@/components/ThemeProvider";
+import SidebarNav from "@/components/SidebarNav";
 import { Button } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
 
@@ -52,20 +53,12 @@ export default async function RootLayout({ children }) {
               🏹 Logginhood
             </Link>
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/clubs" className="hover:text-accent">{t("nav.clubs")}</Link>
               {user ? (
                 <>
-                  <Link href="/dashboard" className="hover:text-accent">{t("nav.dashboard")}</Link>
-                  <Link href="/history" className="hover:text-accent">{t("nav.history")}</Link>
-                  <Link href="/progress" className="hover:text-accent">{t("nav.progress")}</Link>
-                  <Link href="/profile" className="hover:text-accent">{t("nav.profile")}</Link>
-                  <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
                   {isPlatformAdmin && (
-                    <Link href="/admin/clubs" className="hover:text-accent">Admin</Link>
+                    <Link href="/admin/clubs" className="hover:text-accent">{t("nav.admin")}</Link>
                   )}
-                  <Button href="https://logginhood.vercel.app" target="_blank" rel="noreferrer" size="sm">
-                    {t("nav.scoreRound")}
-                  </Button>
+                  <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
                   <form action="/auth/signout" method="post">
                     <button type="submit" className="underline hover:text-accent">
                       {t("nav.logOut")}
@@ -74,13 +67,17 @@ export default async function RootLayout({ children }) {
                 </>
               ) : (
                 <>
+                  <Link href="/clubs" className="hover:text-accent">{t("nav.clubs")}</Link>
                   <Link href="/login" className="hover:text-accent">{t("nav.logIn")}</Link>
                   <Button href="/signup" size="sm">{t("nav.signUp")}</Button>
                 </>
               )}
             </nav>
           </header>
-          <div className="flex-1">{children}</div>
+          <div className="flex flex-1 min-h-0">
+            {user && <SidebarNav messages={messages} />}
+            <div className="min-w-0 flex-1">{children}</div>
+          </div>
         </ThemeProvider>
       </body>
     </html>
