@@ -18,17 +18,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --accent: #4f9c75;
-    --accent-foreground: #06150f;
-    --accent-light: #15281f;
-  }
-}
-
 :root.light {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
   --accent: #2f6f4f;
@@ -37,6 +28,7 @@
 }
 
 :root.dark {
+  color-scheme: dark;
   --background: #0a0a0a;
   --foreground: #ededed;
   --accent: #4f9c75;
