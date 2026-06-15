@@ -25,7 +25,12 @@ export default async function HistoryDetailPage({ params }) {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
-      <Link href="/history" className="text-sm hover:text-accent">&larr; Back to history</Link>
+      <div className="flex items-center justify-between">
+        <Link href="/history" className="text-sm hover:text-accent">&larr; Back to history</Link>
+        <Link href={`/share/${s.id}`} className="btn-primary text-sm">
+          Post my score
+        </Link>
+      </div>
       <h1 className="text-2xl font-semibold">{s.round_name}</h1>
       <p className="text-sm opacity-70">{s.shot_at} · {s.status}</p>
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { SOCIAL_PLATFORMS } from "@/lib/social";
 
 export async function updateProfile(formData) {
   const supabase = await createClient();
@@ -15,6 +16,12 @@ export async function updateProfile(formData) {
   const dob = formData.get("date_of_birth") || null;
   const ageCategory = formData.get("age_category") || null;
 
+  const socialLinks = {};
+  for (const platform of SOCIAL_PLATFORMS) {
+    const value = formData.get(`social_${platform.key}`);
+    if (value) socialLinks[platform.key] = value.trim();
+  }
+
   await supabase
     .from("profiles")
     .update({
@@ -25,6 +32,7 @@ export async function updateProfile(formData) {
       bow_type: formData.get("bow_type") || null,
       age_category: ageCategory,
       club_id: clubId,
+      social_links: socialLinks,
     })
     .eq("id", user.id);
 

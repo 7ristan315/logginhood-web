@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { SOCIAL_PLATFORMS } from "@/lib/social";
 import { updateProfile } from "./actions";
 
 export default async function ProfilePage() {
@@ -9,9 +10,11 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, gb_number, gender, date_of_birth, bow_type, age_category, club_id")
+    .select("full_name, gb_number, gender, date_of_birth, bow_type, age_category, club_id, social_links")
     .eq("id", user.id)
     .single();
+
+  const socialLinks = profile?.social_links ?? {};
 
   const { data: clubs } = await supabase.from("clubs").select("id, name").order("name");
 
@@ -102,6 +105,25 @@ export default async function ProfilePage() {
             ))}
           </select>
         </label>
+
+        <div className="mt-2 flex flex-col gap-3 border-t pt-4">
+          <p className="text-sm font-medium">Social media</p>
+          <p className="text-xs opacity-70">
+            Add links to your accounts so you can pick where to post when sharing a score.
+          </p>
+          {SOCIAL_PLATFORMS.map((p) => (
+            <label key={p.key} className="flex flex-col gap-1 text-sm">
+              {p.icon} {p.label}
+              <input
+                type="url"
+                name={`social_${p.key}`}
+                defaultValue={socialLinks[p.key] ?? ""}
+                placeholder={p.placeholder}
+                className="input-field"
+              />
+            </label>
+          ))}
+        </div>
 
         <button type="submit" className="btn-primary">
           Save profile
