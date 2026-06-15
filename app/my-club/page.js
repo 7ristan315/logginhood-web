@@ -17,6 +17,7 @@ export default async function MyClubPage({ searchParams }) {
     .from("club_members")
     .select("club_id, clubs(id, name)")
     .eq("profile_id", user.id)
+    .limit(1)
     .maybeSingle();
 
   if (!membership) {
