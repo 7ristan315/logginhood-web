@@ -8,8 +8,8 @@ const ITEMS = [
   { href: "/dashboard", icon: "📊", key: "nav.dashboard" },
   { href: "/history", icon: "📜", key: "nav.history" },
   { href: "/progress", icon: "📈", key: "nav.progress" },
-  { href: "/clubs", icon: "🏛️", key: "nav.clubs" },
   { href: "/profile", icon: "👤", key: "nav.profile" },
+  { href: "/my-club", icon: "🏹", key: "nav.myClub" },
 ];
 
 export default function SidebarNav({ messages }) {
@@ -35,7 +35,7 @@ export default function SidebarNav({ messages }) {
           </Link>
         );
       })}
-      <div className="mt-2 border-t border-accent-light pt-2">
+      <div className="mt-2 border-t border-accent-light pt-2 flex flex-col gap-1">
         <a
           href="https://logginhood.vercel.app"
           target="_blank"
@@ -45,6 +45,22 @@ export default function SidebarNav({ messages }) {
           <span aria-hidden="true">🎯</span>
           <span className="hidden md:inline">{t("nav.scoreRound")}</span>
         </a>
+        {(() => {
+          const active = pathname === "/clubs" || pathname.startsWith("/clubs/");
+          return (
+            <Link
+              href="/clubs"
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                active
+                  ? "bg-accent-light font-semibold text-foreground border-l-2 border-accent"
+                  : "border-l-2 border-transparent hover:bg-accent-light hover:text-foreground"
+              }`}
+            >
+              <span aria-hidden="true">🏛️</span>
+              <span className="hidden md:inline">{t("nav.clubs")}</span>
+            </Link>
+          );
+        })()}
       </div>
     </nav>
   );
