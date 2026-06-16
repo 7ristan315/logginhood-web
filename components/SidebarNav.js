@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/progress", icon: "📈", key: "nav.progress" },
   { href: "/profile", icon: "👤", key: "nav.profile" },
   { href: "/my-club", icon: "🏹", key: "nav.myClub" },
+  { href: "/competitions", icon: "🏆", key: "nav.competitions" },
   { href: "/world-rankings", icon: "🌍", key: "nav.worldRankings" },
 ];
 
