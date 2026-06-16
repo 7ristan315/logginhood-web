@@ -19,6 +19,14 @@ const GENDERS = [
   { label: "Female", value: "Female" },
 ];
 
+const BOW_TYPES = [
+  { label: "All", value: null },
+  { label: "Recurve", value: "Recurve" },
+  { label: "Compound", value: "Compound" },
+  { label: "Barebow", value: "Barebow" },
+  { label: "Longbow", value: "Longbow" },
+];
+
 const MEDALS = ["🥇", "🥈", "🥉"];
 const MEDAL_BG = [
   "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700",
@@ -117,13 +125,15 @@ function RecordsSection({ title, rounds, scores }) {
 export default function WorldRecords({ scores }) {
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[0]);
   const [gender, setGender] = useState(GENDERS[0]);
+  const [bowType, setBowType] = useState(BOW_TYPES[0]);
 
   const filtered = useMemo(() => {
     let result = scores;
     if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
     if (gender.value) result = result.filter((s) => s.gender === gender.value);
+    if (bowType.value) result = result.filter((s) => s.bow_type === bowType.value);
     return result;
-  }, [scores, ageGroup, gender]);
+  }, [scores, ageGroup, gender, bowType]);
 
   return (
     <div className="flex flex-col gap-6 pt-4">
@@ -160,6 +170,24 @@ export default function WorldRecords({ scores }) {
                 }`}
               >
                 {g.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Bow type</p>
+          <div className="flex flex-wrap gap-2">
+            {BOW_TYPES.map((b) => (
+              <button
+                key={b.label}
+                onClick={() => setBowType(b)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                  bowType.value === b.value
+                    ? "bg-accent text-accent-foreground"
+                    : "border border-accent text-accent hover:bg-accent-light"
+                }`}
+              >
+                {b.label}
               </button>
             ))}
           </div>

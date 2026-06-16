@@ -16,6 +16,14 @@ const GENDERS = [
   { label: "Female", value: "Female" },
 ];
 
+const BOW_TYPES = [
+  { label: "All", value: null },
+  { label: "Recurve", value: "Recurve" },
+  { label: "Compound", value: "Compound" },
+  { label: "Barebow", value: "Barebow" },
+  { label: "Longbow", value: "Longbow" },
+];
+
 function Pill({ active, onClick, children }) {
   return (
     <button
@@ -40,6 +48,7 @@ export default function RankingsScores({ scores }) {
   const [selectedRounds, setSelectedRounds] = useState(new Set());
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[0]);
   const [gender, setGender] = useState(GENDERS[0]);
+  const [bowType, setBowType] = useState(BOW_TYPES[0]);
   const [lastOnly, setLastOnly] = useState(false);
 
   function toggleRound(r) {
@@ -55,6 +64,7 @@ export default function RankingsScores({ scores }) {
     if (selectedRounds.size > 0) result = result.filter((s) => selectedRounds.has(s.round_name));
     if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
     if (gender.value) result = result.filter((s) => s.gender === gender.value);
+    if (bowType.value) result = result.filter((s) => s.bow_type === bowType.value);
     if (lastOnly) {
       const seen = new Set();
       const out = [];
@@ -65,9 +75,9 @@ export default function RankingsScores({ scores }) {
       result = out;
     }
     return result;
-  }, [scores, selectedRounds, ageGroup, gender, lastOnly]);
+  }, [scores, selectedRounds, ageGroup, gender, bowType, lastOnly]);
 
-  const anyFilter = selectedRounds.size > 0 || ageGroup.values || gender.value || lastOnly;
+  const anyFilter = selectedRounds.size > 0 || ageGroup.values || gender.value || bowType.value || lastOnly;
 
   return (
     <div className="flex flex-col gap-4 pt-4">
@@ -98,6 +108,14 @@ export default function RankingsScores({ scores }) {
             </div>
           </div>
           <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Bow type</p>
+            <div className="flex flex-wrap gap-2">
+              {BOW_TYPES.map((b) => (
+                <Pill key={b.label} active={bowType.value === b.value} onClick={() => setBowType(b)}>{b.label}</Pill>
+              ))}
+            </div>
+          </div>
+          <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">View</p>
             <Pill active={lastOnly} onClick={() => setLastOnly((v) => !v)}>Best score only</Pill>
           </div>
@@ -106,7 +124,7 @@ export default function RankingsScores({ scores }) {
           <div className="flex items-center justify-between border-t border-accent-light pt-2">
             <p className="text-xs opacity-50">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</p>
             <button
-              onClick={() => { setSelectedRounds(new Set()); setAgeGroup(AGE_GROUPS[0]); setGender(GENDERS[0]); setLastOnly(false); }}
+              onClick={() => { setSelectedRounds(new Set()); setAgeGroup(AGE_GROUPS[0]); setGender(GENDERS[0]); setBowType(BOW_TYPES[0]); setLastOnly(false); }}
               className="text-xs text-accent hover:underline"
             >
               Clear all filters
