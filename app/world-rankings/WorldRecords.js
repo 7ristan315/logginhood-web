@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Pill } from "@/components/ui";
 
 const INDOOR_ROUNDS = ["Bray I", "Bray II", "Portsmouth", "Stafford", "WA 18m", "WA 25m", "Worcester"];
 const OUTDOOR_ROUNDS = ["York", "Hereford", "Windsor", "National", "WA 70m", "WA 60m", "WA 1440 (Gents)", "WA 1440 (Ladies)"];
@@ -27,6 +28,16 @@ const BOW_TYPES = [
   { label: "Longbow", value: "Longbow" },
 ];
 
+const GOV_BODIES = [
+  { label: "All", value: null },
+  { label: "Archery GB", value: "AGB" },
+  { label: "World Archery", value: "WA" },
+];
+
+function govBody(roundName) {
+  return roundName?.startsWith("WA ") ? "WA" : "AGB";
+}
+
 const MEDALS = ["🥇", "🥈", "🥉"];
 const MEDAL_BG = [
   "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700",
@@ -46,7 +57,6 @@ function formatDate(d) {
 
 // Top 3 unique members by best score per round
 function topNUnique(scores, n = 3) {
-  // Best score per member
   const bestPerMember = new Map();
   for (const s of scores) {
     const existing = bestPerMember.get(s.profile_id);
@@ -126,14 +136,16 @@ export default function WorldRecords({ scores }) {
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[0]);
   const [gender, setGender] = useState(GENDERS[0]);
   const [bowType, setBowType] = useState(BOW_TYPES[0]);
+  const [gov, setGov] = useState(GOV_BODIES[0]);
 
   const filtered = useMemo(() => {
     let result = scores;
     if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
     if (gender.value) result = result.filter((s) => s.gender === gender.value);
     if (bowType.value) result = result.filter((s) => s.bow_type === bowType.value);
+    if (gov.value) result = result.filter((s) => govBody(s.round_name) === gov.value);
     return result;
-  }, [scores, ageGroup, gender, bowType]);
+  }, [scores, ageGroup, gender, bowType, gov]);
 
   return (
     <div className="flex flex-col gap-6 pt-4">
@@ -142,17 +154,9 @@ export default function WorldRecords({ scores }) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Age group</p>
           <div className="flex flex-wrap gap-2">
             {AGE_GROUPS.map((ag) => (
-              <button
-                key={ag.label}
-                onClick={() => setAgeGroup(ag)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
-                  ageGroup.label === ag.label
-                    ? "bg-accent text-accent-foreground"
-                    : "border border-accent text-accent hover:bg-accent-light"
-                }`}
-              >
+              <Pill key={ag.label} active={ageGroup.label === ag.label} onClick={() => setAgeGroup(ag)}>
                 {ag.label}
-              </button>
+              </Pill>
             ))}
           </div>
         </div>
@@ -160,17 +164,9 @@ export default function WorldRecords({ scores }) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Gender</p>
           <div className="flex gap-2">
             {GENDERS.map((g) => (
-              <button
-                key={g.label}
-                onClick={() => setGender(g)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
-                  gender.value === g.value
-                    ? "bg-accent text-accent-foreground"
-                    : "border border-accent text-accent hover:bg-accent-light"
-                }`}
-              >
+              <Pill key={g.label} active={gender.value === g.value} onClick={() => setGender(g)}>
                 {g.label}
-              </button>
+              </Pill>
             ))}
           </div>
         </div>
@@ -178,17 +174,19 @@ export default function WorldRecords({ scores }) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Bow type</p>
           <div className="flex flex-wrap gap-2">
             {BOW_TYPES.map((b) => (
-              <button
-                key={b.label}
-                onClick={() => setBowType(b)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
-                  bowType.value === b.value
-                    ? "bg-accent text-accent-foreground"
-                    : "border border-accent text-accent hover:bg-accent-light"
-                }`}
-              >
+              <Pill key={b.label} active={bowType.value === b.value} onClick={() => setBowType(b)}>
                 {b.label}
-              </button>
+              </Pill>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Governing body</p>
+          <div className="flex gap-2">
+            {GOV_BODIES.map((g) => (
+              <Pill key={g.label} active={gov.value === g.value} onClick={() => setGov(g)}>
+                {g.label}
+              </Pill>
             ))}
           </div>
         </div>

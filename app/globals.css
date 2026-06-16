@@ -101,13 +101,14 @@ body {
 
 .btn-secondary {
   border-radius: 0.375rem;
-  border: 1px solid var(--accent);
-  color: var(--foreground);
+  border: 1.5px solid var(--accent) !important;
+  color: var(--foreground) !important;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
   transition: background 0.15s ease;
   display: inline-block;
+  background: transparent;
 }
 
 .btn-secondary:hover {

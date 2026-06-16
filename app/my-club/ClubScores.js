@@ -1,10 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Pill } from "@/components/ui";
+import Table from "@/components/ui/Table";
+
+const INDOOR_ROUNDS = ["Bray I","Bray II","Portsmouth","Stafford","WA 18m","WA 25m","Worcester"];
+const OUTDOOR_ROUNDS = ["York","Hereford","Windsor","National","WA 70m","WA 60m","WA 1440 (Gents)","WA 1440 (Ladies)"];
 
 const AGE_GROUPS = [
   { label: "All ages", values: null },
-  { label: "Junior", values: ["U12", "U14", "U15", "U16", "U18"] },
+  { label: "Junior", values: ["U12","U14","U15","U16","U18"] },
   { label: "Senior", values: ["Senior"] },
   { label: "50+", values: ["50+"] },
   { label: "60+", values: ["60+"] },
@@ -24,31 +29,68 @@ const BOW_TYPES = [
   { label: "Longbow", value: "Longbow" },
 ];
 
-function Pill({ active, onClick, children }) {
+const GOV_BODIES = [
+  { label: "All", value: null },
+  { label: "Archery GB", value: "AGB" },
+  { label: "World Archery", value: "WA" },
+];
+
+function govBody(roundName) {
+  return roundName?.startsWith("WA ") ? "WA" : "AGB";
+}
+
+const COLUMNS = [
+  { key: "full_name", label: "Member", render: (v) => <span className="font-medium">{v || "—"}</span> },
+  { key: "round_name", label: "Round" },
+  { key: "shot_at", label: "Date", render: (v) => <span className="tabular-nums opacity-70">{v}</span> },
+  {
+    key: "score", label: "Score", align: "right",
+    render: (v) => <span className="font-semibold tabular-nums" style={{ color: "var(--accent)" }}>{v}</span>,
+  },
+  {
+    key: "golds", label: "Golds", align: "right",
+    render: (v) => <span className="tabular-nums opacity-70">{v ?? "—"}</span>,
+  },
+  {
+    key: "classification", label: "Class",
+    render: (v) => v
+      ? <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">{v}</span>
+      : <span className="opacity-30">—</span>,
+  },
+  { key: "bow_type", label: "Bow", render: (v) => <span className="text-sm opacity-70">{v ?? "—"}</span> },
+  { key: "age_category", label: "Age", render: (v) => <span className="text-sm opacity-70">{v ?? "—"}</span> },
+  {
+    key: "status", label: "Status",
+    render: (v) => v && v !== "Practice"
+      ? <span className="rounded-full bg-accent-light px-2 py-0.5 text-xs font-medium text-accent">{v}</span>
+      : <span className="text-xs opacity-40">{v}</span>,
+  },
+];
+
+function RoundGroup({ label, emoji, rounds, selected, onToggle, bg }) {
+  if (!rounds.length) return null;
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
-        active
-          ? "bg-accent text-accent-foreground"
-          : "border border-accent text-accent hover:bg-accent-light"
-      }`}
-    >
-      {children}
-    </button>
+    <div className="flex-1 min-w-0 rounded-lg p-2.5" style={{ background: bg }}>
+      <p className="mb-2 text-xs font-semibold opacity-50 uppercase tracking-wide">{emoji} {label}</p>
+      <div className="flex flex-wrap gap-2">
+        {rounds.map((r) => (
+          <Pill key={r} active={selected.has(r)} onClick={() => onToggle(r)}>{r}</Pill>
+        ))}
+      </div>
+    </div>
   );
 }
 
 export default function ClubScores({ scores }) {
-  const allRounds = useMemo(
-    () => [...new Set(scores.map((s) => s.round_name))].sort(),
-    [scores]
-  );
+  const availableRounds = useMemo(() => new Set(scores.map((s) => s.round_name)), [scores]);
+  const indoorRounds = useMemo(() => INDOOR_ROUNDS.filter((r) => availableRounds.has(r)), [availableRounds]);
+  const outdoorRounds = useMemo(() => OUTDOOR_ROUNDS.filter((r) => availableRounds.has(r)), [availableRounds]);
 
   const [selectedRounds, setSelectedRounds] = useState(new Set());
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[0]);
   const [gender, setGender] = useState(GENDERS[0]);
   const [bowType, setBowType] = useState(BOW_TYPES[0]);
+  const [gov, setGov] = useState(GOV_BODIES[0]);
   const [lastOnly, setLastOnly] = useState(false);
 
   function toggleRound(r) {
@@ -61,19 +103,11 @@ export default function ClubScores({ scores }) {
 
   const filtered = useMemo(() => {
     let result = scores;
-
-    if (selectedRounds.size > 0) {
-      result = result.filter((s) => selectedRounds.has(s.round_name));
-    }
-    if (ageGroup.values) {
-      result = result.filter((s) => ageGroup.values.includes(s.age_category));
-    }
-    if (gender.value) {
-      result = result.filter((s) => s.gender === gender.value);
-    }
-    if (bowType.value) {
-      result = result.filter((s) => s.bow_type === bowType.value);
-    }
+    if (selectedRounds.size > 0) result = result.filter((s) => selectedRounds.has(s.round_name));
+    if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
+    if (gender.value) result = result.filter((s) => s.gender === gender.value);
+    if (bowType.value) result = result.filter((s) => s.bow_type === bowType.value);
+    if (gov.value) result = result.filter((s) => govBody(s.round_name) === gov.value);
     if (lastOnly) {
       const seen = new Set();
       const out = [];
@@ -83,28 +117,47 @@ export default function ClubScores({ scores }) {
       }
       result = out;
     }
-
     return result;
-  }, [scores, selectedRounds, ageGroup, gender, lastOnly]);
+  }, [scores, selectedRounds, ageGroup, gender, bowType, gov, lastOnly]);
 
-  const anyFilter = selectedRounds.size > 0 || ageGroup.values || gender.value || bowType.value || lastOnly;
+  const anyFilter = selectedRounds.size > 0 || ageGroup.values || gender.value || bowType.value || gov.value || lastOnly;
+
+  function clearAll() {
+    setSelectedRounds(new Set());
+    setAgeGroup(AGE_GROUPS[0]);
+    setGender(GENDERS[0]);
+    setBowType(BOW_TYPES[0]);
+    setGov(GOV_BODIES[0]);
+    setLastOnly(false);
+  }
 
   return (
     <div className="flex flex-col gap-4 pt-4">
-      {/* Filter panel */}
       <div className="card flex flex-col gap-4">
-        {/* Round type — multi-select */}
+
+        {/* Round type — indoor / outdoor split */}
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Round type</p>
-          <div className="flex flex-wrap gap-2">
-            {allRounds.map((r) => (
-              <Pill key={r} active={selectedRounds.has(r)} onClick={() => toggleRound(r)}>{r}</Pill>
-            ))}
+          <div className="flex flex-col gap-2">
+            <RoundGroup
+              label="Indoor" emoji="🏠"
+              rounds={indoorRounds}
+              selected={selectedRounds}
+              onToggle={toggleRound}
+              bg="rgba(99,102,241,0.06)"
+            />
+            <RoundGroup
+              label="Outdoor" emoji="🌤️"
+              rounds={outdoorRounds}
+              selected={selectedRounds}
+              onToggle={toggleRound}
+              bg="rgba(34,197,94,0.06)"
+            />
           </div>
         </div>
 
-        {/* Gender · Age group · View — in a row */}
-        <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-accent-light pt-3">
+        {/* Row filters */}
+        <div className="flex flex-wrap gap-x-8 gap-y-3" style={{ borderTop: "1px solid var(--accent-light)", paddingTop: "0.75rem" }}>
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Gender</p>
             <div className="flex gap-2">
@@ -130,83 +183,37 @@ export default function ClubScores({ scores }) {
             </div>
           </div>
           <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">Governing body</p>
+            <div className="flex gap-2">
+              {GOV_BODIES.map((g) => (
+                <Pill key={g.label} active={gov.value === g.value} onClick={() => setGov(g)}>{g.label}</Pill>
+              ))}
+            </div>
+          </div>
+          <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-50">View</p>
             <Pill active={lastOnly} onClick={() => setLastOnly((v) => !v)}>Last score only</Pill>
           </div>
         </div>
 
-        {/* Active filter summary + clear */}
         {anyFilter && (
-          <div className="flex items-center justify-between border-t border-accent-light pt-2">
-            <p className="text-xs opacity-50">
-              {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-            </p>
-            <button
-              onClick={() => { setSelectedRounds(new Set()); setAgeGroup(AGE_GROUPS[0]); setGender(GENDERS[0]); setBowType(BOW_TYPES[0]); setLastOnly(false); }}
-              className="text-xs text-accent hover:underline"
-            >
+          <div className="flex items-center justify-between" style={{ borderTop: "1px solid var(--accent-light)", paddingTop: "0.5rem" }}>
+            <p className="text-xs opacity-50">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</p>
+            <button onClick={clearAll} style={{ color: "var(--accent)" }} className="text-xs hover:underline">
               Clear all filters
             </button>
           </div>
         )}
       </div>
 
-      {/* Scores table */}
-      {filtered.length === 0 ? (
-        <div className="card py-10 text-center text-sm opacity-50">No scores match these filters.</div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-accent-light">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-accent-light bg-accent-light/40">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Member</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Round</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Date</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide opacity-60">Score</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide opacity-60">Golds</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Class</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Bow</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Age</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide opacity-60">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s, i) => (
-                <tr
-                  key={s.id}
-                  className={`border-b border-accent-light transition-colors hover:bg-accent-light/30 ${
-                    i % 2 === 0 ? "" : "bg-accent-light/10"
-                  }`}
-                >
-                  <td className="px-4 py-3 font-medium">{s.full_name || "—"}</td>
-                  <td className="px-4 py-3">{s.round_name}</td>
-                  <td className="px-4 py-3 tabular-nums opacity-70">{s.shot_at}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-accent tabular-nums">{s.score}</td>
-                  <td className="px-4 py-3 text-right tabular-nums opacity-70">{s.golds ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    {s.classification ? (
-                      <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
-                        {s.classification}
-                      </span>
-                    ) : (
-                      <span className="opacity-30">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm opacity-70">{s.bow_type ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm opacity-70">{s.age_category ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    {s.status && s.status !== "Practice" ? (
-                      <span className="rounded-full bg-accent-light px-2 py-0.5 text-xs font-medium text-accent">{s.status}</span>
-                    ) : (
-                      <span className="text-xs opacity-40">{s.status}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Table
+        columns={COLUMNS}
+        rows={filtered}
+        keyField="id"
+        caption="Club scores"
+        emptyState="No scores match these filters."
+        striped
+      />
     </div>
   );
 }
