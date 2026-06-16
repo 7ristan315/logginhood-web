@@ -25,13 +25,20 @@ export default async function WorldRankingsPage({ searchParams }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // All profiles with club info (policies: USING(true) — readable by all authenticated users)
+  // Fetch profiles and clubs separately to avoid FK join issues
   const profiles = await fetchAll(
-    supabase.from("profiles").select("id, full_name, gender, club_id, clubs(name)")
+    supabase.from("profiles").select("id, full_name, gender, club_id")
   );
 
+  const { data: clubs } = await supabase.from("clubs").select("id, name");
+  const clubMap = Object.fromEntries((clubs || []).map((c) => [c.id, c.name]));
+
   const profileMap = Object.fromEntries(
-    profiles.map((p) => [p.id, { full_name: p.full_name, gender: p.gender, club_name: p.clubs?.name ?? "—" }])
+    profiles.map((p) => [p.id, {
+      full_name: p.full_name,
+      gender: p.gender,
+      club_name: p.club_id ? (clubMap[p.club_id] ?? "—") : "—",
+    }])
   );
 
   // All scores — paginated to get past the 1000-row default limit
