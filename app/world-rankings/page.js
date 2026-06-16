@@ -1,36 +1,46 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import RankingsScores from "./RankingsScores";
 import WorldRecords from "./WorldRecords";
 
 export const metadata = { title: "World Rankings — Logginhood" };
 
+async function fetchAll(query) {
+  const PAGE = 1000;
+  let from = 0;
+  const rows = [];
+  while (true) {
+    const { data, error } = await query.range(from, from + PAGE - 1);
+    if (error || !data?.length) break;
+    rows.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+  return rows;
+}
+
 export default async function WorldRankingsPage({ searchParams }) {
   const { tab = "scores" } = await searchParams;
-
-  // Auth check with user client
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Use admin client to bypass RLS for public leaderboard data
-  const admin = createAdminClient();
-
-  // All profiles with club info
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, full_name, gender, club_id, clubs(name)");
-
-  const profileMap = Object.fromEntries(
-    (profiles || []).map((p) => [p.id, { full_name: p.full_name, gender: p.gender, club_name: p.clubs?.name ?? "—" }])
+  // All profiles with club info (policies: USING(true) — readable by all authenticated users)
+  const profiles = await fetchAll(
+    supabase.from("profiles").select("id, full_name, gender, club_id, clubs(name)")
   );
 
-  // All scores
-  const { data: rawScores } = await admin
-    .from("scores")
-    .select("id, profile_id, round_name, score, golds, shot_at, status, bow_type, age_category, classification")
-    .order("shot_at", { ascending: false });
+  const profileMap = Object.fromEntries(
+    profiles.map((p) => [p.id, { full_name: p.full_name, gender: p.gender, club_name: p.clubs?.name ?? "—" }])
+  );
+
+  // All scores — paginated to get past the 1000-row default limit
+  const rawScores = await fetchAll(
+    supabase
+      .from("scores")
+      .select("id, profile_id, round_name, score, golds, shot_at, status, bow_type, age_category, classification")
+      .order("shot_at", { ascending: false })
+  );
 
   const scores = (rawScores || []).map((s) => ({
     ...s,
