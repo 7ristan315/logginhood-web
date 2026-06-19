@@ -2,10 +2,6 @@
 import { useEffect, useRef } from "react";
 
 const SCORES = ["X", "X", "10", "10", "10", "9", "9", "8", "7", "M"];
-const SCORE_COLORS = {
-  X: "#f3d34e", "10": "#f3d34e", "9": "#e8394a",
-  "8": "#e8394a", "7": "#1a6bbf", M: "rgba(200,80,80,0.8)",
-};
 
 function randomArrow(w, h) {
   return {
@@ -34,6 +30,10 @@ export default function ArrowToScore({ style }) {
     let particles = [];
     let raf;
 
+    function getAccent() {
+      return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#2f6f4f";
+    }
+
     function init() {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
@@ -47,7 +47,7 @@ export default function ArrowToScore({ style }) {
     function drawArrow(p) {
       ctx.save();
       ctx.globalAlpha = p.alpha;
-      ctx.strokeStyle = "#f3d34e";
+      ctx.strokeStyle = getAccent();
       ctx.lineWidth = 1.5;
       ctx.lineCap = "round";
       ctx.translate(p.x, p.y);
@@ -78,7 +78,7 @@ export default function ArrowToScore({ style }) {
       const t = p.impactT / 12;
       ctx.save();
       ctx.globalAlpha = (1 - t) * 0.6;
-      ctx.strokeStyle = SCORE_COLORS[p.score] || "#fff";
+      ctx.strokeStyle = p.score === "M" ? "rgba(200,80,80,0.8)" : getAccent();
       ctx.lineWidth = 1;
       for (let i = 0; i < 5; i++) {
         const a = (i / 5) * Math.PI * 2;
@@ -94,7 +94,7 @@ export default function ArrowToScore({ style }) {
     function drawScore(p) {
       ctx.save();
       ctx.globalAlpha = p.scoreAlpha;
-      ctx.fillStyle = SCORE_COLORS[p.score] || "#fff";
+      ctx.fillStyle = p.score === "M" ? "rgba(200,80,80,0.9)" : getAccent();
       ctx.font = `bold 13px monospace`;
       ctx.textAlign = "center";
       ctx.fillText(p.score, p.x, p.scoreY);
