@@ -7,7 +7,6 @@ import ThemeProvider from "@/components/ThemeProvider";
 import SidebarNav from "@/components/SidebarNav";
 import { Button } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
-import ScoreMatrix from "@/components/ScoreMatrix";
 import ArrowToScore from "@/components/ArrowToScore";
 
 const geistSans = Geist({
@@ -90,10 +89,10 @@ export default async function RootLayout({ children }) {
             {user && <SidebarNav messages={messages} />}
             <div className="min-w-0 flex-1">{children}</div>
           </div>
-          <footer style={{position:"relative",overflow:"hidden",padding:"1.5rem 1.5rem",borderTop:"2px solid var(--color-accent)",background:"var(--color-background)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
-            <ScoreMatrix />
+          <footer className="border-t-2 border-accent bg-background" style={{position:"relative",overflow:"hidden",padding:"1rem 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
+            <ArrowToScore reverse />
             <span style={{position:"relative",zIndex:1,fontSize:13,color:"var(--foreground)",opacity:0.5}}>© {new Date().getFullYear()} Logginhood</span>
-            <nav style={{position:"relative",zIndex:1,display:"flex",gap:"1.25rem",fontSize:13,opacity:0.7}}>
+            <nav style={{position:"relative",zIndex:1,background:"var(--background)",borderRadius:8,padding:"4px 12px",border:"1px solid rgba(128,128,128,0.15)",display:"flex",gap:"1.25rem",fontSize:13}}>
               <Link href="/features" style={{color:"inherit"}}>Features</Link>
               <Link href="/clubs" style={{color:"inherit"}}>Clubs</Link>
               <Link href="/login" style={{color:"inherit"}}>Log in</Link>
