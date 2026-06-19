@@ -17,7 +17,7 @@ export default function ArrowRain({ style }) {
       arrows = Array.from({ length: 35 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height - canvas.height,
-        speed: 1.2 + Math.random() * 2.2,
+        speed: 0.3 + Math.random() * 0.7,
         len: 22 + Math.random() * 18,
         angle: Math.PI / 2 + (Math.random() - 0.5) * 0.5,
         alpha: 0.12 + Math.random() * 0.22,
