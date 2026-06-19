@@ -5,6 +5,8 @@ import ClubScores from "./ClubScores";
 import ClubRecords from "./ClubRecords";
 import CalendarTab from "./CalendarTab";
 import TrophiesTab from "./TrophiesTab";
+import BadgesTab from "./BadgesTab";
+import BadgeAdminTab from "./BadgeAdminTab";
 
 export default async function MyClubPage({ searchParams }) {
   const { tab = "scores" } = await searchParams;
@@ -98,6 +100,36 @@ export default async function MyClubPage({ searchParams }) {
     }
   }
 
+  // === Badges ===
+  let userProfile = null, userScores = [], badgeTypes = [], badgeStock = [], badgeOrders = [];
+  let isBadgeAdmin = false, adminOrders = [];
+  if (tab === "badges" || tab === "badge-admin") {
+    const [profRes, scoresRes, btRes, bsRes, boRes, rolesRes] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, bow_type, age_category, gender").eq("id", user.id).single(),
+      supabase.from("scores").select("id, profile_id, round_name, score, bow_type, age_category, shot_at").eq("profile_id", user.id),
+      supabase.from("badge_types").select("*").or(`club_id.is.null,club_id.eq.${clubId}`).order("sort_order", { ascending: false }),
+      supabase.from("badge_stock").select("*").eq("club_id", clubId),
+      supabase.from("badge_orders").select("*").eq("profile_id", user.id).eq("club_id", clubId).order("created_at", { ascending: false }),
+      supabase.from("club_member_roles").select("role").eq("club_id", clubId).eq("profile_id", user.id).catch(() => ({ data: [] })),
+    ]);
+    userProfile = profRes.data;
+    userScores  = scoresRes.data ?? [];
+    badgeTypes  = btRes.data ?? [];
+    badgeStock  = bsRes.data ?? [];
+    badgeOrders = boRes.data ?? [];
+    isBadgeAdmin = (rolesRes.data ?? []).some(r => r.role === "badge_admin")
+      || ["admin","chairman","secretary"].includes(userRole);
+  }
+
+  if (tab === "badge-admin" && isBadgeAdmin) {
+    const { data: ao } = await supabase
+      .from("badge_orders")
+      .select("*, profiles(full_name), badge_types(label, bow_type, name, default_cost)")
+      .eq("club_id", clubId)
+      .order("created_at", { ascending: false });
+    adminOrders = ao ?? [];
+  }
+
   // === Trophies ===
   let trophies = [];
   if (tab === "trophies") {
@@ -115,10 +147,12 @@ export default async function MyClubPage({ searchParams }) {
   }
 
   const TABS = [
-    { key: "scores",    label: "Scores" },
-    { key: "records",   label: "Club records" },
-    { key: "calendar",  label: "📅 Calendar" },
-    { key: "trophies",  label: "🏆 Trophies" },
+    { key: "scores",       label: "Scores" },
+    { key: "records",      label: "Club records" },
+    { key: "calendar",     label: "📅 Calendar" },
+    { key: "trophies",     label: "🏆 Trophies" },
+    { key: "badges",       label: "🎖️ Badges" },
+    ...(isBadgeAdmin ? [{ key: "badge-admin", label: "⚙️ Badge admin" }] : []),
   ];
 
   return (
@@ -155,6 +189,25 @@ export default async function MyClubPage({ searchParams }) {
         />
       )}
       {tab === "trophies" && <TrophiesTab trophies={trophies} />}
+      {tab === "badges" && (
+        <BadgesTab
+          userProfile={userProfile}
+          userScores={userScores}
+          badgeTypes={badgeTypes}
+          badgeStock={badgeStock}
+          badgeOrders={badgeOrders}
+          clubId={clubId}
+        />
+      )}
+      {tab === "badge-admin" && isBadgeAdmin && (
+        <BadgeAdminTab
+          badgeTypes={badgeTypes}
+          badgeStock={badgeStock}
+          adminOrders={adminOrders}
+          clubId={clubId}
+          members={members}
+        />
+      )}
     </main>
   );
 }

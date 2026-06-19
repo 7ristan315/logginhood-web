@@ -27,8 +27,8 @@ export default async function Home() {
   }
 
   const [{ data: profile }, { data: membership }, { data: scores }] = await Promise.all([
-    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
-    supabase.from("club_members").select("club_id, role, clubs(id, name)").eq("profile_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("full_name, club_id, clubs(id, name)").eq("id", user.id).single(),
+    supabase.from("club_members").select("club_id, role, clubs(id, name)").eq("profile_id", user.id).eq("status", "approved").maybeSingle(),
     supabase
       .from("scores")
       .select("id, round_name, score, shot_at, status")
@@ -84,14 +84,18 @@ export default async function Home() {
 
         <div className="flex flex-col gap-4">
           <Card title={t("home.loggedIn.yourClub")}>
-            {membership?.clubs ? (
-              <div className="flex items-center justify-between gap-2">
-                <Link href={`/clubs/${membership.clubs.id}`} className="font-medium hover:text-accent">
-                  {membership.clubs.name}
-                </Link>
-                {membership.role && membership.role !== "member" && <Badge>{roleLabel(membership.role)}</Badge>}
-              </div>
-            ) : (
+            {(membership?.clubs || profile?.clubs) ? (() => {
+              const club = membership?.clubs || profile?.clubs;
+              return (
+                <div className="flex items-center justify-between gap-2">
+                  <Link href={`/clubs/${club.id}`} className="font-medium hover:text-accent">
+                    {club.name}
+                  </Link>
+                  {membership?.role && membership.role !== "member" && <Badge>{roleLabel(membership.role)}</Badge>}
+                  {!membership && <span className="text-xs opacity-50">Linked</span>}
+                </div>
+              );
+            })() : (
               <EmptyState
                 icon="🏟️"
                 title={t("home.loggedIn.noClub.title")}
