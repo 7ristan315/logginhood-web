@@ -62,21 +62,19 @@ export default function ArrowToScore({ style, reverse = false }) {
       ctx.moveTo(0, -l / 2);
       ctx.lineTo(0, l / 2);
       ctx.stroke();
-      // fletching at tail (opposite end from point)
-      const tailY = reverse ? l / 2 : l / 2;
+      // fletching — flares outward past the tail end
       ctx.beginPath();
-      ctx.moveTo(0, tailY);
-      ctx.lineTo(-3.5, tailY - 7);
-      ctx.moveTo(0, tailY);
-      ctx.lineTo(3.5, tailY - 7);
+      ctx.moveTo(0, l / 2);
+      ctx.lineTo(-5, l / 2 + 9);
+      ctx.moveTo(0, l / 2);
+      ctx.lineTo(5, l / 2 + 9);
       ctx.stroke();
-      // point at tip
-      const tipY = -l / 2;
+      // point — narrows to a tip
       ctx.beginPath();
-      ctx.moveTo(0, tipY);
-      ctx.lineTo(-2.5, tipY + 6);
-      ctx.moveTo(0, tipY);
-      ctx.lineTo(2.5, tipY + 6);
+      ctx.moveTo(0, -l / 2);
+      ctx.lineTo(-2, -l / 2 + 5);
+      ctx.moveTo(0, -l / 2);
+      ctx.lineTo(2, -l / 2 + 5);
       ctx.stroke();
       ctx.restore();
     }
