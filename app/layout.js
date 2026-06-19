@@ -55,7 +55,7 @@ export default async function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="h-full flex flex-col overflow-hidden">
         <ThemeProvider>
           <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background px-6 py-3" style={{position:"sticky",overflow:"hidden"}}><ArrowToScore />
             <Link href="/" className="flex items-center" style={{position:"relative",zIndex:1}}>
@@ -85,9 +85,9 @@ export default async function RootLayout({ children }) {
               )}
             </nav>
           </header>
-          <div className="flex flex-1 min-h-0" style={{position:"relative"}}>
+          <div className="flex flex-1 min-h-0 overflow-hidden" style={{position:"relative"}}>
             {user && <SidebarNav messages={messages} />}
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
           </div>
           <footer className="border-t-2 border-accent bg-background" style={{position:"relative",overflow:"hidden",padding:"1rem 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
             <ArrowToScore reverse />
