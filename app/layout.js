@@ -66,6 +66,7 @@ export default async function RootLayout({ children }) {
                   {isPlatformAdmin && (
                     <Link href="/admin/clubs" className="hover:text-accent">{t("nav.admin")}</Link>
                   )}
+                  <Link href="/features" className="hover:text-accent">Features</Link>
                   <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
                   <form action="/auth/signout" method="post">
                     <button type="submit" className="underline hover:text-accent">
