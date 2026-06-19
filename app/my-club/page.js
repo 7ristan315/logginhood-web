@@ -104,20 +104,25 @@ export default async function MyClubPage({ searchParams }) {
   let userProfile = null, userScores = [], badgeTypes = [], badgeStock = [], badgeOrders = [];
   let isBadgeAdmin = false, adminOrders = [];
   if (tab === "badges" || tab === "badge-admin") {
-    const [profRes, scoresRes, btRes, bsRes, boRes, rolesRes] = await Promise.all([
+    const [profRes, scoresRes, btRes, bsRes, boRes] = await Promise.all([
       supabase.from("profiles").select("id, full_name, bow_type, age_category, gender").eq("id", user.id).single(),
       supabase.from("scores").select("id, profile_id, round_name, score, bow_type, age_category, shot_at").eq("profile_id", user.id),
       supabase.from("badge_types").select("*").or(`club_id.is.null,club_id.eq.${clubId}`).order("sort_order", { ascending: false }),
       supabase.from("badge_stock").select("*").eq("club_id", clubId),
       supabase.from("badge_orders").select("*").eq("profile_id", user.id).eq("club_id", clubId).order("created_at", { ascending: false }),
-      supabase.from("club_member_roles").select("role").eq("club_id", clubId).eq("profile_id", user.id).catch(() => ({ data: [] })),
     ]);
     userProfile = profRes.data;
     userScores  = scoresRes.data ?? [];
     badgeTypes  = btRes.data ?? [];
     badgeStock  = bsRes.data ?? [];
     badgeOrders = boRes.data ?? [];
-    isBadgeAdmin = (rolesRes.data ?? []).some(r => r.role === "badge_admin")
+
+    const { data: rolesData } = await supabase
+      .from("club_member_roles")
+      .select("role")
+      .eq("club_id", clubId)
+      .eq("profile_id", user.id);
+    isBadgeAdmin = (rolesData ?? []).some(r => r.role === "badge_admin")
       || ["admin","chairman","secretary"].includes(userRole);
   }
 
