@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Pill } from "@/components/ui";
 import Table from "@/components/ui/Table";
+import { bestClassForBow } from "@/lib/classification";
 
 const INDOOR_ROUNDS = ["Bray I","Bray II","Portsmouth","Stafford","WA 18m","WA 25m","Worcester"];
 const OUTDOOR_ROUNDS = ["York","Hereford","Windsor","National","WA 70m","WA 60m","WA 1440 (Gents)","WA 1440 (Ladies)"];
@@ -82,7 +83,24 @@ function RoundGroup({ label, emoji, rounds, selected, onToggle, bg }) {
 }
 
 export default function ClubScores({ scores }) {
-  const availableRounds = useMemo(() => new Set(scores.map((s) => s.round_name)), [scores]);
+  // Pre-compute best classification per (profile_id, bow_type)
+  const bestClsMap = useMemo(() => {
+    const map = {};
+    const pairs = [...new Set(scores.map(s => `${s.profile_id}|${s.bow_type}`))];
+    for (const pair of pairs) {
+      const [pid, bow] = pair.split("|");
+      const sample = scores.find(s => s.profile_id === pid && s.bow_type === bow);
+      map[pair] = bestClassForBow(scores, pid, bow, sample?.gender, sample?.age_category);
+    }
+    return map;
+  }, [scores]);
+
+  const scoredRows = useMemo(() =>
+    scores.map(s => ({ ...s, classification: bestClsMap[`${s.profile_id}|${s.bow_type}`] ?? s.classification })),
+    [scores, bestClsMap]
+  );
+
+  const availableRounds = useMemo(() => new Set(scoredRows.map((s) => s.round_name)), [scoredRows]);
   const indoorRounds = useMemo(() => INDOOR_ROUNDS.filter((r) => availableRounds.has(r)), [availableRounds]);
   const outdoorRounds = useMemo(() => OUTDOOR_ROUNDS.filter((r) => availableRounds.has(r)), [availableRounds]);
 
@@ -102,7 +120,7 @@ export default function ClubScores({ scores }) {
   }
 
   const filtered = useMemo(() => {
-    let result = scores;
+    let result = scoredRows;
     if (selectedRounds.size > 0) result = result.filter((s) => selectedRounds.has(s.round_name));
     if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
     if (gender.value) result = result.filter((s) => s.gender === gender.value);
@@ -121,6 +139,7 @@ export default function ClubScores({ scores }) {
   }, [scores, selectedRounds, ageGroup, gender, bowType, gov, lastOnly]);
 
   const anyFilter = selectedRounds.size > 0 || ageGroup.values || gender.value || bowType.value || gov.value || lastOnly;
+
 
   function clearAll() {
     setSelectedRounds(new Set());
