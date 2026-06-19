@@ -62,7 +62,7 @@ export default async function RootLayout({ children }) {
             <Link href="/" className="flex items-center" style={{position:"relative",zIndex:1}}>
               <Image src="/brand/logo-header.png" alt="Logginhood" width={97} height={40} priority />
             </Link>
-            <nav className="flex items-center gap-4 text-sm" style={{position:"relative",zIndex:1}}>
+            <nav className="flex items-center gap-4 text-sm" style={{position:"relative",zIndex:1,background:"var(--background)",opacity:1,borderRadius:8,padding:"4px 12px",border:"1px solid rgba(128,128,128,0.15)"}}>
               {user ? (
                 <>
                   {isPlatformAdmin && (
