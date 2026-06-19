@@ -57,7 +57,13 @@ function formatDate(d) {
 }
 
 function topN(scores, n = 3) {
-  return [...scores].sort((a, b) => b.score - a.score).slice(0, n);
+  // One entry per archer (profile_id + bow_type + age_category) — keep their best score
+  const best = {};
+  for (const s of scores) {
+    const key = `${s.profile_id}|${s.bow_type}|${s.age_category}`;
+    if (!best[key] || s.score > best[key].score) best[key] = s;
+  }
+  return Object.values(best).sort((a, b) => b.score - a.score).slice(0, n);
 }
 
 function RecordRow({ round, topScores }) {
