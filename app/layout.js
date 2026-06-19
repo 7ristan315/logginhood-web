@@ -75,6 +75,7 @@ export default async function RootLayout({ children }) {
                 </>
               ) : (
                 <>
+                  <Link href="/features" className="hover:text-accent">Features</Link>
                   <Link href="/clubs" className="hover:text-accent">{t("nav.clubs")}</Link>
                   <Link href="/login" className="hover:text-accent">{t("nav.logIn")}</Link>
                   <Button href="/signup" size="sm">{t("nav.signUp")}</Button>
