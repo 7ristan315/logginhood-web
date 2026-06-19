@@ -7,6 +7,8 @@ import ThemeProvider from "@/components/ThemeProvider";
 import SidebarNav from "@/components/SidebarNav";
 import { Button } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
+import ScoreMatrix from "@/components/ScoreMatrix";
+import ArrowRain from "@/components/ArrowRain";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,11 +58,11 @@ export default async function RootLayout({ children }) {
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur">
-            <Link href="/" className="flex items-center">
+          <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur" style={{position:"sticky",overflow:"hidden"}}><ScoreMatrix />
+            <Link href="/" className="flex items-center" style={{position:"relative",zIndex:1}}>
               <Image src="/brand/logo-header.png" alt="Logginhood" width={97} height={40} priority />
             </Link>
-            <nav className="flex items-center gap-4 text-sm">
+            <nav className="flex items-center gap-4 text-sm" style={{position:"relative",zIndex:1}}>
               {user ? (
                 <>
                   {isPlatformAdmin && (
@@ -84,10 +86,20 @@ export default async function RootLayout({ children }) {
               )}
             </nav>
           </header>
-          <div className="flex flex-1 min-h-0">
+          <div className="flex flex-1 min-h-0" style={{position:"relative"}}>
+            <ArrowRain />
             {user && <SidebarNav messages={messages} />}
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className="min-w-0 flex-1" style={{position:"relative",zIndex:1}}>{children}</div>
           </div>
+          <footer style={{position:"relative",overflow:"hidden",padding:"1.5rem 1.5rem",borderTop:"2px solid var(--color-accent)",background:"var(--color-background)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
+            <ScoreMatrix />
+            <span style={{position:"relative",zIndex:1,fontSize:13,color:"var(--foreground)",opacity:0.5}}>© {new Date().getFullYear()} Logginhood</span>
+            <nav style={{position:"relative",zIndex:1,display:"flex",gap:"1.25rem",fontSize:13,opacity:0.7}}>
+              <Link href="/features" style={{color:"inherit"}}>Features</Link>
+              <Link href="/clubs" style={{color:"inherit"}}>Clubs</Link>
+              <Link href="/login" style={{color:"inherit"}}>Log in</Link>
+            </nav>
+          </footer>
         </ThemeProvider>
       </body>
     </html>
