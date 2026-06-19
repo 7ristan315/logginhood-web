@@ -8,6 +8,7 @@ import SidebarNav from "@/components/SidebarNav";
 import { Button } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
 import ScoreMatrix from "@/components/ScoreMatrix";
+import ArrowToScore from "@/components/ArrowToScore";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,7 +58,7 @@ export default async function RootLayout({ children }) {
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur" style={{position:"sticky",overflow:"hidden"}}><ScoreMatrix />
+          <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background/90 px-6 py-3 backdrop-blur" style={{position:"sticky",overflow:"hidden"}}><ArrowToScore />
             <Link href="/" className="flex items-center" style={{position:"relative",zIndex:1}}>
               <Image src="/brand/logo-header.png" alt="Logginhood" width={97} height={40} priority />
             </Link>
