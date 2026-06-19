@@ -32,7 +32,7 @@ export default function ScoreMatrix({ style }) {
           ? "rgba(243,211,78,0.9)"
           : `rgba(${80 + Math.floor(Math.random() * 30)},200,${100 + Math.floor(Math.random() * 60)},0.65)`;
         ctx.fillText(s, i * 20 + 4, y * 15);
-        drops[i] = y > canvas.height / 15 + 5 && Math.random() > 0.99 ? 0 : y + 0.18;
+        drops[i] = y > canvas.height / 15 + 5 && Math.random() > 0.998 ? 0 : y + 0.036;
       });
       raf = requestAnimationFrame(tick);
     }

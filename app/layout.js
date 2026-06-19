@@ -8,7 +8,6 @@ import SidebarNav from "@/components/SidebarNav";
 import { Button } from "@/components/ui";
 import { getMessages, translate } from "@/lib/i18n";
 import ScoreMatrix from "@/components/ScoreMatrix";
-import ArrowRain from "@/components/ArrowRain";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,9 +86,8 @@ export default async function RootLayout({ children }) {
             </nav>
           </header>
           <div className="flex flex-1 min-h-0" style={{position:"relative"}}>
-            <ArrowRain />
             {user && <SidebarNav messages={messages} />}
-            <div className="min-w-0 flex-1" style={{position:"relative",zIndex:1}}>{children}</div>
+            <div className="min-w-0 flex-1">{children}</div>
           </div>
           <footer style={{position:"relative",overflow:"hidden",padding:"1.5rem 1.5rem",borderTop:"2px solid var(--color-accent)",background:"var(--color-background)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
             <ScoreMatrix />

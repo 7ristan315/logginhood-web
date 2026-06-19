@@ -36,6 +36,30 @@
   --accent-light: #15281f;
 }
 
+body {
+  background-image:
+    radial-gradient(circle, transparent 20%, rgba(47,111,79,0.04) 20.5%, transparent 21%),
+    radial-gradient(circle, transparent 29%, rgba(47,111,79,0.04) 29.5%, transparent 30%),
+    radial-gradient(circle, transparent 38%, rgba(47,111,79,0.04) 38.5%, transparent 39%),
+    radial-gradient(circle, transparent 47%, rgba(47,111,79,0.04) 47.5%, transparent 48%),
+    radial-gradient(circle, transparent 56%, rgba(47,111,79,0.04) 56.5%, transparent 57%),
+    radial-gradient(circle, transparent 65%, rgba(47,111,79,0.04) 65.5%, transparent 66%);
+  background-size: 900px 900px;
+  background-position: right -200px top 60px;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+:root.dark body {
+  background-image:
+    radial-gradient(circle, transparent 20%, rgba(79,156,117,0.06) 20.5%, transparent 21%),
+    radial-gradient(circle, transparent 29%, rgba(79,156,117,0.06) 29.5%, transparent 30%),
+    radial-gradient(circle, transparent 38%, rgba(79,156,117,0.06) 38.5%, transparent 39%),
+    radial-gradient(circle, transparent 47%, rgba(79,156,117,0.06) 47.5%, transparent 48%),
+    radial-gradient(circle, transparent 56%, rgba(79,156,117,0.06) 56.5%, transparent 57%),
+    radial-gradient(circle, transparent 65%, rgba(79,156,117,0.06) 65.5%, transparent 66%);
+}
+
 .tab-nav {
   display: flex;
   gap: 0.4rem;
