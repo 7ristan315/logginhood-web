@@ -1,23 +1,12 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Image from "next/image";
-import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import ThemeProvider from "@/components/ThemeProvider";
 import SidebarNav from "@/components/SidebarNav";
-import { Button } from "@/components/ui";
-import { getMessages, translate } from "@/lib/i18n";
-import ArrowToScore from "@/components/ArrowToScore";
+import { getMessages } from "@/lib/i18n";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata = {
   title: "Logginhood",
@@ -26,78 +15,32 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   const messages = getMessages();
-  const t = (key) => translate(messages, key);
 
-  let isPlatformAdmin = false;
+  let profile = null;
   if (user) {
-    const { data: profile } = await supabase
+    const { data } = await supabase
       .from("profiles")
-      .select("platform_admin")
+      .select("full_name, bow_type, platform_admin, clubs(id, name)")
       .eq("id", user.id)
       .single();
-    isPlatformAdmin = !!profile?.platform_admin;
+    profile = data;
   }
 
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=JSON.parse(localStorage.getItem("logginhood_theme"));var dark=t&&t.mode==="dark";document.documentElement.classList.add(dark?"dark":"light");}catch(e){document.documentElement.classList.add("light");}})();`,
-          }}
-        />
+        <script dangerouslySetInnerHTML={{
+          __html: `(function(){try{var t=JSON.parse(localStorage.getItem("logginhood_theme"));document.documentElement.classList.add(t&&t.mode==="dark"?"dark":"light");}catch(e){document.documentElement.classList.add("light");}})();`,
+        }} />
       </head>
-      <body className="h-full flex flex-col overflow-hidden">
+      <body className="h-full flex overflow-hidden">
         <ThemeProvider>
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-accent bg-background px-6 py-3" style={{position:"sticky",overflow:"hidden"}}><ArrowToScore />
-            <Link href="/" className="flex items-center" style={{position:"relative",zIndex:1}}>
-              <Image src="/brand/logo-header.png" alt="Logginhood" width={97} height={40} priority />
-            </Link>
-            <nav className="flex items-center gap-4 text-sm" style={{position:"relative",zIndex:1,background:"var(--background)",opacity:1,borderRadius:8,padding:"4px 12px",border:"1px solid rgba(128,128,128,0.15)"}}>
-              {user ? (
-                <>
-                  {isPlatformAdmin && (
-                    <Link href="/admin/clubs" className="hover:text-accent">{t("nav.admin")}</Link>
-                  )}
-                  <Link href="/features" className="hover:text-accent">Features</Link>
-                  <Link href="/settings" className="hover:text-accent">{t("nav.settings")}</Link>
-                  <form action="/auth/signout" method="post">
-                    <button type="submit" className="underline hover:text-accent">
-                      {t("nav.logOut")}
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <Link href="/features" className="hover:text-accent">Features</Link>
-                  <Link href="/clubs" className="hover:text-accent">{t("nav.clubs")}</Link>
-                  <Link href="/login" className="hover:text-accent">{t("nav.logIn")}</Link>
-                  <Button href="/signup" size="sm">{t("nav.signUp")}</Button>
-                </>
-              )}
-            </nav>
-          </header>
-          <div className="flex flex-1 min-h-0 overflow-hidden" style={{position:"relative"}}>
-            {user && <SidebarNav messages={messages} />}
-            <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
+          <SidebarNav messages={messages} user={user} profile={profile} />
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            {children}
           </div>
-          <footer className="border-t-2 border-accent bg-background" style={{position:"relative",overflow:"hidden",padding:"1rem 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"}}>
-            <ArrowToScore reverse />
-            <span style={{position:"relative",zIndex:1,fontSize:13,color:"var(--foreground)",opacity:0.5}}>© {new Date().getFullYear()} Logginhood</span>
-            <nav style={{position:"relative",zIndex:1,background:"var(--background)",borderRadius:8,padding:"4px 12px",border:"1px solid rgba(128,128,128,0.15)",display:"flex",gap:"1.25rem",fontSize:13}}>
-              <Link href="/features" style={{color:"inherit"}}>Features</Link>
-              <Link href="/clubs" style={{color:"inherit"}}>Clubs</Link>
-              <Link href="/login" style={{color:"inherit"}}>Log in</Link>
-            </nav>
-          </footer>
         </ThemeProvider>
       </body>
     </html>
