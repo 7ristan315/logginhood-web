@@ -391,20 +391,259 @@ function StepDone({ result, onReset }) {
 }
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
-const STEPS = ["upload","mapping","review","names","preview","done"];
-const STEP_LABELS = { upload:"Upload", mapping:"Reading", review:"Review", names:"Match archers", preview:"Confirm", done:"Done" };
+const CSV_STEPS = ["mode","upload","mapping","review","names","preview","done"];
+const SS_STEPS  = ["mode","ss_upload","ss_reading","ss_review","preview","done"];
+const CSV_LABELS = { mode:"Method", upload:"Upload", mapping:"Reading", review:"Review", names:"Match archers", preview:"Confirm", done:"Done" };
+const SS_LABELS  = { mode:"Method", ss_upload:"Upload", ss_reading:"Reading", ss_review:"Review", preview:"Confirm", done:"Done" };
+
+const BOW_TYPES = ["Recurve","Compound","Barebow","Longbow"];
+
+// ── Mode selector ─────────────────────────────────────────────────────────────
+function StepModeSelect({ onCsv, onScreenshots }) {
+  return (
+    <div style={{ maxWidth: 520, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+      <div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Import your scores</h2>
+        <p style={{ opacity: 0.55, fontSize: 14, margin: 0 }}>How would you like to bring your data in?</p>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {[
+          {
+            icon: "📸", title: "Screenshots from another app",
+            sub: "Archer's Toolbox, ArcherySuccess, any app — screenshot your history and Claude reads it. Best for migrating from apps with no export.",
+            action: onScreenshots,
+          },
+          {
+            icon: "📄", title: "CSV / spreadsheet file",
+            sub: "Export a CSV from your current app or use your own spreadsheet. Claude maps the columns automatically.",
+            action: onCsv,
+          },
+        ].map(opt => (
+          <button key={opt.title} onClick={opt.action} style={{
+            display: "flex", alignItems: "flex-start", gap: 16, padding: "18px 20px",
+            borderRadius: 12, border: "1px solid var(--accent-light)", background: "color-mix(in srgb, var(--accent) 3%, var(--background))",
+            cursor: "pointer", textAlign: "left", transition: "border-color 0.15s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--accent-light)"}>
+            <span style={{ fontSize: 32, flexShrink: 0 }}>{opt.icon}</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: "var(--foreground)" }}>{opt.title}</div>
+              <div style={{ fontSize: 13, opacity: 0.55, lineHeight: 1.5 }}>{opt.sub}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Screenshot upload ─────────────────────────────────────────────────────────
+function StepScreenshotUpload({ onProcess }) {
+  const [images, setImages] = useState([]); // {file, preview}
+  const [bowType, setBowType] = useState("");
+  const inputRef = useRef();
+
+  function addFiles(files) {
+    const newImgs = Array.from(files)
+      .filter(f => f.type.startsWith("image/"))
+      .map(f => ({ file: f, preview: URL.createObjectURL(f) }));
+    setImages(prev => [...prev, ...newImgs]);
+  }
+
+  function remove(i) {
+    setImages(prev => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function process() {
+    // Convert to base64
+    const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(img.file);
+    })));
+    onProcess(base64s, bowType);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Upload your screenshots</h2>
+        <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+          Screenshot your score <strong>history list</strong> in your app (scroll through and capture each page). Optionally add individual round screenshots for full arrow detail.
+        </p>
+      </div>
+
+      {/* Tips */}
+      <div style={{ padding: 12, borderRadius: 10, background: "var(--accent-light)", fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ fontWeight: 600, marginBottom: 2 }}>💡 Tips for best results</div>
+        <div style={{ opacity: 0.7 }}>1. In Archer's Toolbox, go to <strong>Score History</strong> and screenshot each page of the list — this gives dates + totals for all rounds</div>
+        <div style={{ opacity: 0.7 }}>2. Optionally open individual rounds and screenshot them for full end-by-end arrow detail</div>
+        <div style={{ opacity: 0.7 }}>3. Upload everything at once — Claude figures out which is which and stitches them together</div>
+      </div>
+
+      {/* Drop zone */}
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+        style={{
+          border: "2px dashed var(--accent-light)", borderRadius: 12,
+          padding: images.length ? "16px" : "40px 20px",
+          textAlign: images.length ? "left" : "center", cursor: "pointer",
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--accent-light)"}
+      >
+        <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+          onChange={e => addFiles(e.target.files)} />
+
+        {images.length === 0 ? (
+          <>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>📱</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Drop screenshots here</div>
+            <div style={{ fontSize: 13, opacity: 0.5 }}>or tap to choose — select multiple at once</div>
+          </>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {images.map((img, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={img.preview} alt={`Screenshot ${i+1}`}
+                  style={{ height: 120, borderRadius: 8, objectFit: "cover", display: "block" }} />
+                <button onClick={e => { e.stopPropagation(); remove(i); }}
+                  style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  ×
+                </button>
+              </div>
+            ))}
+            <div style={{ height: 120, width: 80, borderRadius: 8, border: "2px dashed var(--accent-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, opacity: 0.4, cursor: "pointer" }}>+</div>
+          </div>
+        )}
+      </div>
+
+      {images.length > 0 && (
+        <div style={{ fontSize: 13, opacity: 0.5 }}>{images.length} screenshot{images.length !== 1 ? "s" : ""} ready</div>
+      )}
+
+      {/* Bow type — ask once */}
+      <div>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 600 }}>
+          What bow type were these scores shot with?
+          <select value={bowType} onChange={e => setBowType(e.target.value)}
+            style={{ fontSize: 14, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", maxWidth: 220 }}>
+            <option value="">— select —</option>
+            {BOW_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <span style={{ fontWeight: 400, opacity: 0.5 }}>Applied to all imported scores. You can change individual ones in the next step.</span>
+        </label>
+      </div>
+
+      <button onClick={process} disabled={images.length === 0 || !bowType}
+        style={{
+          padding: "11px 22px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
+          border: "none", cursor: images.length === 0 || !bowType ? "not-allowed" : "pointer",
+          fontWeight: 700, fontSize: 14, opacity: images.length === 0 || !bowType ? 0.4 : 1, alignSelf: "flex-start",
+        }}>
+        Read with Claude →
+      </button>
+    </div>
+  );
+}
+
+// ── Screenshot review ─────────────────────────────────────────────────────────
+function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
+  const missingDates = scores.filter(s => !s.date).length;
+
+  function updateRow(i, field, val) {
+    setScores(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
+  }
+  function removeRow(i) {
+    setScores(prev => prev.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Review extracted scores</h2>
+        <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+          {scores.length} rounds found · {missingDates > 0 ? `${missingDates} missing dates — fill these in below` : "All dates found ✓"}
+        </p>
+      </div>
+
+      {missingDates > 0 && (
+        <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", fontSize: 13 }}>
+          ⚠️ {missingDates} round{missingDates !== 1 ? "s are" : " is"} missing a date — this happens when you only uploaded detail screens without the history list. Add a date for each highlighted row or delete ones you don't need.
+        </div>
+      )}
+
+      <div style={{ border: "1px solid var(--accent-light)", borderRadius: 10, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: "var(--accent-light)" }}>
+              {["Round","Date","Score","Golds","Detail",""].map(h => (
+                <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 600, opacity: 0.6, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {scores.map((s, i) => (
+              <tr key={i} style={{ borderTop: "1px solid var(--accent-light)", background: !s.date ? "rgba(245,158,11,0.05)" : "transparent" }}>
+                <td style={{ padding: "6px 10px" }}>
+                  <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
+                    style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 130 }} />
+                </td>
+                <td style={{ padding: "6px 10px" }}>
+                  <input type="date" value={s.date || ""} onChange={e => updateRow(i, "date", e.target.value)}
+                    style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: `1px solid ${!s.date ? "#f59e0b" : "var(--accent-light)"}`, background: "var(--background)", color: "var(--foreground)" }} />
+                </td>
+                <td style={{ padding: "6px 10px", fontWeight: 700, color: "var(--accent)" }}>{s.score}</td>
+                <td style={{ padding: "6px 10px", opacity: 0.6 }}>{s.golds ?? "—"}</td>
+                <td style={{ padding: "6px 10px" }}>
+                  {s.has_detail
+                    ? <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>✓ {s.arrows?.length} arrows</span>
+                    : <span style={{ fontSize: 11, opacity: 0.35 }}>totals only</span>}
+                </td>
+                <td style={{ padding: "6px 6px" }}>
+                  <button onClick={() => removeRow(i)}
+                    style={{ fontSize: 14, color: "#dc2626", background: "none", border: "none", cursor: "pointer", opacity: 0.5, padding: 0 }}>×</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <button onClick={onNext} disabled={missingDates > 0 || scores.length === 0}
+        style={{
+          padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
+          border: "none", cursor: missingDates > 0 || scores.length === 0 ? "not-allowed" : "pointer",
+          fontWeight: 600, fontSize: 14, opacity: missingDates > 0 || scores.length === 0 ? 0.4 : 1, alignSelf: "flex-start",
+        }}>
+        Preview import →
+      </button>
+    </div>
+  );
+}
 
 // ── Main wizard ───────────────────────────────────────────────────────────────
 export default function ImportWizard({ userId, isOfficer, members }) {
-  const [step, setStep]               = useState("upload");
-  const [fileName, setFileName]       = useState("");
-  const [parsed, setParsed]           = useState(null);   // { headers, rows }
-  const [mappings, setMappings]       = useState([]);
-  const [importMode, setImportMode]   = useState("self");
-  const [nameMatches, setNameMatches] = useState({});
-  const [loading, setLoading]         = useState(false);
-  const [result, setResult]           = useState(null);
-  const [globalError, setGlobalError] = useState(null);
+  const [step, setStep]                   = useState("mode");
+  const [source, setSource]               = useState(null); // "csv" | "screenshots"
+  // CSV flow
+  const [fileName, setFileName]           = useState("");
+  const [parsed, setParsed]               = useState(null);
+  const [mappings, setMappings]           = useState([]);
+  const [importMode, setImportMode]       = useState("self");
+  const [nameMatches, setNameMatches]     = useState({});
+  // Screenshot flow
+  const [ssScores, setSsScores]           = useState([]);
+  const [ssBowType, setSsBowType]         = useState("");
+  // Shared
+  const [loading, setLoading]             = useState(false);
+  const [result, setResult]               = useState(null);
+  const [globalError, setGlobalError]     = useState(null);
 
   const supabase = createClient();
 
@@ -442,8 +681,40 @@ export default function ImportWizard({ userId, isOfficer, members }) {
     });
   }
 
+  // Screenshot: call edge function then go to review
+  async function handleScreenshotProcess(base64s, bowType) {
+    setSsBowType(bowType);
+    setStep("ss_reading");
+    setGlobalError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-screenshot-scores", {
+        body: { images: base64s },
+      });
+      if (error) throw error;
+      setSsScores(data.scores || []);
+      setStep("ss_review");
+    } catch (e) {
+      setGlobalError(e.message || "Failed to read screenshots");
+      setStep("ss_upload");
+    }
+  }
+
   // Build final import-ready rows with profile_id
   function getReadyRows() {
+    if (source === "screenshots") {
+      return ssScores
+        .filter(s => s.date && s.round_name && s.score)
+        .map(s => ({
+          profile_id:  userId,
+          round_name:  s.round_name,
+          score:       parseInt(s.score),
+          golds:       s.golds != null ? parseInt(s.golds) : null,
+          shot_at:     s.date,
+          bow_type:    ssBowType || null,
+          age_category: null,
+          classification: null,
+        }));
+    }
     const mapped = getMappedRows();
     if (importMode === "self") {
       return mapped.map(r => ({ ...r, profile_id: userId }));
@@ -469,11 +740,13 @@ export default function ImportWizard({ userId, isOfficer, members }) {
   }
 
   function reset() {
-    setStep("upload"); setParsed(null); setFileName(""); setMappings([]);
-    setImportMode("self"); setNameMatches({}); setResult(null); setGlobalError(null);
+    setStep("mode"); setSource(null); setParsed(null); setFileName(""); setMappings([]);
+    setImportMode("self"); setNameMatches({}); setSsScores([]); setSsBowType("");
+    setResult(null); setGlobalError(null);
   }
 
-  const stepIdx = STEPS.indexOf(step);
+  const STEPS      = source === "screenshots" ? SS_STEPS : CSV_STEPS;
+  const STEP_LABELS = source === "screenshots" ? SS_LABELS : CSV_LABELS;
   const visibleSteps = isOfficer ? STEPS : STEPS.filter(s => s !== "names");
 
   return (
@@ -515,6 +788,40 @@ export default function ImportWizard({ userId, isOfficer, members }) {
         </div>
       )}
 
+      {step === "mode" && (
+        <StepModeSelect
+          onCsv={() => { setSource("csv"); setStep("upload"); }}
+          onScreenshots={() => { setSource("screenshots"); setStep("ss_upload"); }}
+        />
+      )}
+
+      {/* ── Screenshot flow ── */}
+      {step === "ss_upload" && (
+        <StepScreenshotUpload onProcess={handleScreenshotProcess} />
+      )}
+      {step === "ss_reading" && (
+        <div style={{ maxWidth: 520, margin: "0 auto", textAlign: "center", padding: "48px 0" }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🤖</div>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Reading your screenshots…</div>
+          <div style={{ opacity: 0.5, fontSize: 14 }}>Claude is extracting scores and stitching detail views together</div>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 6 }}>
+            {[0.1,0.2,0.3].map(d => (
+              <div key={d} style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", animation: `pulse 1.2s ease-in-out ${d}s infinite` }} />
+            ))}
+          </div>
+          <style>{`@keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }`}</style>
+        </div>
+      )}
+      {step === "ss_review" && (
+        <StepScreenshotReview
+          scores={ssScores}
+          setScores={setSsScores}
+          bowType={ssBowType}
+          onNext={() => setStep("preview")}
+        />
+      )}
+
+      {/* ── CSV flow ── */}
       {step === "upload"  && <StepUpload onParsed={handleParsed} />}
       {step === "mapping" && <StepMapping fileName={fileName} rowCount={parsed?.rows?.length ?? 0} />}
       {step === "review"  && (
@@ -540,6 +847,8 @@ export default function ImportWizard({ userId, isOfficer, members }) {
           onNext={() => setStep("preview")}
         />
       )}
+
+      {/* ── Shared ── */}
       {step === "preview" && (
         <StepPreview
           readyRows={getReadyRows()}
