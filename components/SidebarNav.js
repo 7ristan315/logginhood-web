@@ -87,6 +87,24 @@ export default function SidebarNav({ messages, user, profile }) {
         </Link>
       </div>
 
+      {/* Profile card — below logo */}
+      <div style={{ padding: "0 0.5rem" }}>
+        <Link href="/profile" className="sidebar-profile">
+          <Initials name={profile?.full_name} />
+          <div className="sidebar-profile-info">
+            <span className="sidebar-profile-name">{profile?.full_name || "Archer"}</span>
+            {profile?.bow_type && (
+              <span className="sidebar-profile-meta">
+                {BOW_ICON[profile.bow_type]} {profile.bow_type}
+              </span>
+            )}
+            {profile?.clubs?.name && (
+              <span className="sidebar-profile-club">{profile.clubs.name}</span>
+            )}
+          </div>
+        </Link>
+      </div>
+
       {/* Nav items */}
       <div className="sidebar-nav-items">
         {NAV_ITEMS.map(item => (
@@ -102,22 +120,6 @@ export default function SidebarNav({ messages, user, profile }) {
           <span aria-hidden="true">🎯</span>
           <span className="sidebar-item-label">{t("nav.scoreRound")}</span>
         </a>
-
-        {/* Profile card — below Score a round */}
-        <Link href="/profile" className="sidebar-profile">
-          <Initials name={profile?.full_name} />
-          <div className="sidebar-profile-info">
-            <span className="sidebar-profile-name">{profile?.full_name || "Archer"}</span>
-            {profile?.bow_type && (
-              <span className="sidebar-profile-meta">
-                {BOW_ICON[profile.bow_type]} {profile.bow_type}
-              </span>
-            )}
-            {profile?.clubs?.name && (
-              <span className="sidebar-profile-club">{profile.clubs.name}</span>
-            )}
-          </div>
-        </Link>
       </div>
 
       {/* Bottom: settings + sign out */}

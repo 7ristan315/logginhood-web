@@ -31,9 +31,9 @@ const BOW_SKILL = {
 };
 
 const BOW_TYPES = Object.keys(BOW_SKILL);
-const AGE_CATS = ["Junior", "Senior", "Senior", "Senior", "50+", "50+", "60+"]; // weighted
+const AGE_CATS = ["U18", "U16", "U14", "Senior", "Senior", "Senior", "Senior", "50+", "50+", "60+"]; // weighted
 const GENDERS = ["Male", "Female"];
-const STATUSES = ["Competition", "Competition", "Practice", "Record"];
+const STATUSES = ["Competition", "Competition", "Competition", "Practice"];
 const CLASSIFICATIONS = ["A1","A2","A3","B1","B2","B3","C1","C2","C3","MB","GMB",null,null];
 
 const CLUB_NAMES = [
@@ -81,24 +81,17 @@ function generateScore(roundName, bow) {
 
 function esc(s) { return `'${s.replace(/'/g, "''")}'`; }
 
+// Real admin user to satisfy created_by NOT NULL on clubs trigger
+const ADMIN_USER_ID = "afff38e8-198e-4052-a5aa-3f655a4195ce";
+
 // --- Generate data ---
 const lines = [];
 lines.push("-- Logginhood test data");
 lines.push("-- Run in Supabase SQL editor");
 lines.push("");
 
-// 1. Clubs (skip The Phoenix Bowmen if it already exists — use ON CONFLICT)
-lines.push("-- CLUBS");
+// Generate members first so we can reference their IDs in clubs created_by
 const clubs = CLUB_NAMES.map((name) => ({ id: randomUUID(), name }));
-// Insert clubs
-lines.push(`INSERT INTO public.clubs (id, name) VALUES`);
-lines.push(clubs.map(c => `  (${esc(c.id)}, ${esc(c.name)})`).join(",\n"));
-lines.push(`ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;`);
-lines.push("");
-
-// We'll use the club IDs we generated — if Phoenix Bowmen already exists
-// the RETURNING won't help in plain SQL, so we reference by name later for the real club.
-// For test members we'll use the generated IDs directly.
 
 // 2. Generate members per club
 const allMembers = [];
@@ -113,12 +106,11 @@ for (const club of clubs) {
     const bow = rand(BOW_TYPES);
     const age = rand(AGE_CATS);
     const uid = randomUUID();
-
     allMembers.push({ uid, fullName, gender, bow, age, clubId: club.id, clubName: club.name });
   }
 }
 
-// 3. Auth users (insert into auth.users)
+// 3. Auth users FIRST (clubs trigger needs created_by to be a valid user)
 lines.push("-- AUTH USERS (test accounts — no real login needed)");
 lines.push(`INSERT INTO auth.users (id, email, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)`);
 lines.push(`VALUES`);
@@ -128,7 +120,14 @@ lines.push(allMembers.map((m, idx) =>
 lines.push(`ON CONFLICT (id) DO NOTHING;`);
 lines.push("");
 
-// 4. Profiles
+// 4. Clubs (after auth users so created_by FK is satisfied; use admin user as creator)
+lines.push("-- CLUBS");
+lines.push(`INSERT INTO public.clubs (id, name, created_by) VALUES`);
+lines.push(clubs.map(c => `  (${esc(c.id)}, ${esc(c.name)}, ${esc(ADMIN_USER_ID)})`).join(",\n"));
+lines.push(`ON CONFLICT (id) DO NOTHING;`);
+lines.push("");
+
+// 5. Profiles
 lines.push("-- PROFILES");
 lines.push(`INSERT INTO public.profiles (id, full_name, gender, bow_type, age_category, club_id) VALUES`);
 lines.push(allMembers.map(m =>
@@ -137,7 +136,7 @@ lines.push(allMembers.map(m =>
 lines.push(`ON CONFLICT (id) DO UPDATE SET full_name=EXCLUDED.full_name, gender=EXCLUDED.gender, bow_type=EXCLUDED.bow_type, age_category=EXCLUDED.age_category, club_id=EXCLUDED.club_id;`);
 lines.push("");
 
-// 5. Club members
+// 6. Club members
 lines.push("-- CLUB MEMBERS");
 lines.push(`INSERT INTO public.club_members (profile_id, club_id, role, status) VALUES`);
 lines.push(allMembers.map(m =>

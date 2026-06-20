@@ -68,36 +68,33 @@ export default async function MyClubPage({ searchParams }) {
   }
 
   // === Calendar ===
-  let sessions = [], locations = [], keyholderMap = {};
+  let sessions = [], locations = [], keyholders = [];
   if (tab === "calendar") {
-    const today = new Date().toISOString().slice(0, 10);
     const sixWeeksAgo = new Date(Date.now() - 42 * 86400000).toISOString().slice(0, 10);
 
-    const { data: rawSessions } = await supabase
-      .from("sessions")
-      .select(`
-        id, name, location, description, session_date, start_time, end_time,
-        max_places, is_cancelled, keyholder_alert_sent,
-        session_bookings(profile_id, profiles(full_name))
-      `)
-      .eq("club_id", clubId)
-      .gte("session_date", sixWeeksAgo)
-      .order("session_date", { ascending: true });
+    const [sessRes, locRes, khRes] = await Promise.all([
+      supabase
+        .from("sessions")
+        .select("id, name, location, event_type, description, session_date, start_time, end_time, max_places, is_cancelled, assigned_keyholder_id, session_bookings(profile_id, profiles(full_name))")
+        .eq("club_id", clubId)
+        .gte("session_date", sixWeeksAgo)
+        .order("session_date", { ascending: true }),
+      supabase
+        .from("club_locations")
+        .select("id, name, address, access_notes, is_active")
+        .eq("club_id", clubId)
+        .eq("is_active", true)
+        .order("name"),
+      supabase
+        .from("keyholders")
+        .select("id, profile_id, location, profiles(full_name)")
+        .eq("club_id", clubId)
+        .eq("is_active", true),
+    ]);
 
-    sessions = rawSessions ?? [];
-    locations = [...new Set(sessions.map((s) => s.location))];
-
-    // Fetch keyholders per location
-    const { data: kh } = await supabase
-      .from("keyholders")
-      .select("profile_id, location")
-      .eq("club_id", clubId)
-      .eq("is_active", true);
-
-    for (const k of kh ?? []) {
-      if (!keyholderMap[k.location]) keyholderMap[k.location] = [];
-      keyholderMap[k.location].push(k.profile_id);
-    }
+    sessions  = sessRes.data ?? [];
+    locations = locRes.data ?? [];
+    keyholders = khRes.data ?? [];
   }
 
   // === Badges ===
@@ -190,7 +187,8 @@ export default async function MyClubPage({ searchParams }) {
           userId={user.id}
           userRole={userRole}
           locations={locations}
-          keyholderIds={keyholderMap}
+          keyholders={keyholders}
+          members={members || []}
         />
       )}
       {tab === "trophies" && <TrophiesTab trophies={trophies} />}
