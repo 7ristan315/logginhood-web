@@ -7,6 +7,7 @@ import CalendarTab from "./CalendarTab";
 import TrophiesTab from "./TrophiesTab";
 import BadgesTab from "./BadgesTab";
 import BadgeAdminTab from "./BadgeAdminTab";
+import ClassificationAuditTab from "./ClassificationAuditTab";
 
 export default async function MyClubPage({ searchParams }) {
   const { tab = "scores" } = await searchParams;
@@ -132,6 +133,18 @@ export default async function MyClubPage({ searchParams }) {
     adminOrders = ao ?? [];
   }
 
+  // === Classifications ===
+  const isRecordsOfficer = ["records_keeper", "chairman", "secretary"].includes(userRole);
+  let clsScores = [];
+  if (tab === "classifications" && isRecordsOfficer) {
+    const { data: rawCls } = await supabase
+      .from("scores")
+      .select("id, profile_id, round_name, score, bow_type, age_category, classification")
+      .in("profile_id", memberIds.length ? memberIds : ["__none__"])
+      .order("shot_at", { ascending: false });
+    clsScores = rawCls ?? [];
+  }
+
   // === Trophies ===
   let trophies = [];
   if (tab === "trophies") {
@@ -149,12 +162,13 @@ export default async function MyClubPage({ searchParams }) {
   }
 
   const TABS = [
-    { key: "scores",       label: "Scores" },
-    { key: "records",      label: "Club records" },
-    { key: "calendar",     label: "📅 Calendar" },
-    { key: "trophies",     label: "🏆 Trophies" },
-    { key: "badges",       label: "🎖️ Badges" },
+    { key: "scores",          label: "Scores" },
+    { key: "records",         label: "Club records" },
+    { key: "calendar",        label: "📅 Calendar" },
+    { key: "trophies",        label: "🏆 Trophies" },
+    { key: "badges",          label: "🎖️ Badges" },
     ...(isBadgeAdmin ? [{ key: "badge-admin", label: "⚙️ Badge admin" }] : []),
+    ...(isRecordsOfficer ? [{ key: "classifications", label: "📊 Classifications" }] : []),
   ];
 
   return (
@@ -201,6 +215,9 @@ export default async function MyClubPage({ searchParams }) {
           badgeOrders={badgeOrders}
           clubId={clubId}
         />
+      )}
+      {tab === "classifications" && isRecordsOfficer && (
+        <ClassificationAuditTab scores={clsScores} members={members || []} clubId={clubId} />
       )}
       {tab === "badge-admin" && isBadgeAdmin && (
         <BadgeAdminTab
