@@ -527,24 +527,24 @@ function StepScreenshotUpload({ onProcess }) {
         <div style={{ fontSize: 13, opacity: 0.5 }}>{images.length} screenshot{images.length !== 1 ? "s" : ""} ready</div>
       )}
 
-      {/* Bow type — ask once */}
+      {/* Bow type — optional fallback only */}
       <div>
         <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 600 }}>
-          What bow type were these scores shot with?
+          Bow type fallback <span style={{ fontWeight: 400, opacity: 0.55 }}>(optional)</span>
           <select value={bowType} onChange={e => setBowType(e.target.value)}
             style={{ fontSize: 14, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", maxWidth: 220 }}>
-            <option value="">— select —</option>
+            <option value="">Auto-detect from screenshot</option>
             {BOW_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
-          <span style={{ fontWeight: 400, opacity: 0.5 }}>Applied to all imported scores. You can change individual ones in the next step.</span>
+          <span style={{ fontWeight: 400, opacity: 0.5 }}>Bow type is read from each round automatically. Only set this if it's missing from your screenshots.</span>
         </label>
       </div>
 
-      <button onClick={process} disabled={images.length === 0 || !bowType}
+      <button onClick={process} disabled={images.length === 0}
         style={{
           padding: "11px 22px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
-          border: "none", cursor: images.length === 0 || !bowType ? "not-allowed" : "pointer",
-          fontWeight: 700, fontSize: 14, opacity: images.length === 0 || !bowType ? 0.4 : 1, alignSelf: "flex-start",
+          border: "none", cursor: images.length === 0 ? "not-allowed" : "pointer",
+          fontWeight: 700, fontSize: 14, opacity: images.length === 0 ? 0.4 : 1, alignSelf: "flex-start",
         }}>
         Read with Claude →
       </button>
