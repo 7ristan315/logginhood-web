@@ -1,69 +1,140 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import DashboardClient from "./DashboardClient";
+
+const LBL = ["IA3","IA2","IA1","IB3","IB2","IB1","IMB","IGMB"];
+
+function dateStr(d) { return d.toISOString().slice(0, 10); }
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, bow_type")
     .eq("id", user.id)
     .single();
 
-  const { data: scores } = await supabase
+  const { data: rawScores } = await supabase
     .from("scores")
-    .select("id, round_name, score, golds, shot_at, status, bow_type, age_category, classification")
+    .select("id, round_name, score, golds, shot_at, bow_type, age_category, classification")
     .eq("profile_id", user.id)
     .order("shot_at", { ascending: false });
 
+  const scores = rawScores || [];
+
+  // ── Personal bests per round+bow ─────────────────────────────────────────
+  const pbMap = {};
+  for (const s of scores) {
+    const key = `${s.round_name}|${s.bow_type}`;
+    if (!pbMap[key] || s.score > pbMap[key].score) pbMap[key] = s;
+  }
+  const pbSet = new Set(Object.values(pbMap).map(s => s.id));
+  const personalBests = Object.values(pbMap)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8)
+    .map(s => ({ ...s, shot_at: s.shot_at?.slice(0, 10) }));
+
+  // ── Overall PB ───────────────────────────────────────────────────────────
+  const pbScore = scores.reduce((best, s) => (!best || s.score > best.score) ? s : best, null);
+
+  // ── Monthly counts ───────────────────────────────────────────────────────
+  const now = new Date();
+  const monthStart = dateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+  const lastMonthStart = dateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const roundsThisMonth = scores.filter(s => s.shot_at >= monthStart).length;
+  const roundsLastMonth = scores.filter(s => s.shot_at >= lastMonthStart && s.shot_at < monthStart).length;
+
+  // ── Best classification ───────────────────────────────────────────────────
+  const bestClsScore = scores.reduce((best, s) => {
+    if (!s.classification) return best;
+    const idx = LBL.indexOf(s.classification);
+    const bestIdx = best ? LBL.indexOf(best.classification) : -1;
+    return idx > bestIdx ? s : best;
+  }, null);
+
+  // ── Recent sessions with PB flag + diff vs previous same round+bow ───────
+  const recentWithDiff = scores.slice(0, 20).map((s, idx) => {
+    const older = scores.slice(idx + 1).find(o => o.round_name === s.round_name && o.bow_type === s.bow_type);
+    return {
+      ...s,
+      isPB: pbSet.has(s.id),
+      diffVsPrev: older != null ? s.score - older.score : null,
+      shot_at: s.shot_at?.slice(0, 10),
+    };
+  });
+
+  // ── Sparkline: most-shot round+bow combo ─────────────────────────────────
+  const freq = {};
+  for (const s of scores) {
+    const key = `${s.round_name}|${s.bow_type}`;
+    freq[key] = (freq[key] || 0) + 1;
+  }
+  const topKey = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+  const [sparkRound, sparkBow] = topKey.split("|");
+  const sparklineScores = scores
+    .filter(s => s.round_name === sparkRound && s.bow_type === sparkBow)
+    .slice(0, 12)
+    .reverse();
+  const sparklineData = sparklineScores.map(s => s.score);
+  const sparklineRound = topKey ? `${sparkRound} (${sparkBow})` : "";
+
+  // ── By bow type ───────────────────────────────────────────────────────────
+  const bowCounts = {};
+  for (const s of scores) bowCounts[s.bow_type] = (bowCounts[s.bow_type] || 0) + 1;
+  const maxBow = Math.max(...Object.values(bowCounts), 1);
+  const byBow = Object.entries(bowCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([bow, count]) => ({ bow, count, pct: Math.round((count / maxBow) * 100) }));
+
+  // ── Stats object ──────────────────────────────────────────────────────────
+  const stats = {
+    total: scores.length,
+    totalGolds: scores.reduce((n, s) => n + (s.golds || 0), 0),
+    pb: pbScore?.score ?? null,
+    pbRound: pbScore ? `${pbScore.round_name} · ${pbScore.bow_type}` : null,
+    roundsThisMonth,
+    monthDiff: roundsLastMonth > 0 || roundsThisMonth > 0 ? roundsThisMonth - roundsLastMonth : null,
+    bestCls: bestClsScore?.classification ?? null,
+    bestClsBow: bestClsScore?.bow_type ?? null,
+    bestClsAge: bestClsScore?.age_category ?? null,
+  };
+
+  const name = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Archer";
+  const hour = new Date().getUTCHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <div style={{ marginBottom: "1.75rem" }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+          {greeting}, {name.split(" ")[0]} 🏹
         </h1>
-        <Link href="/scores/new" className="btn-primary">
-          Add a score
-        </Link>
+        {scores.length > 0 && (
+          <p style={{ margin: "0.3rem 0 0", opacity: 0.5, fontSize: 13 }}>
+            {scores.length} rounds logged · last shot {scores[0]?.shot_at?.slice(0, 10)}
+          </p>
+        )}
       </div>
 
-      {!scores?.length ? (
-        <p className="text-gray-600">
-          No scores yet. <Link href="/scores/new" className="underline">Log your first round</Link>.
-        </p>
+      {scores.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "4rem 2rem", opacity: 0.5 }}>
+          <div style={{ fontSize: 48, marginBottom: "1rem" }}>🎯</div>
+          <p style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>No rounds logged yet</p>
+          <p style={{ fontSize: 14 }}>Open the app and shoot your first round to see your stats here.</p>
+        </div>
       ) : (
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b text-left">
-              <th className="py-2">Date</th>
-              <th className="py-2">Round</th>
-              <th className="py-2">Score</th>
-              <th className="py-2">Golds</th>
-              <th className="py-2">Bow</th>
-              <th className="py-2">Age cat.</th>
-              <th className="py-2">Class</th>
-              <th className="py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((s) => (
-              <tr key={s.id} className="border-b">
-                <td className="py-2">{s.shot_at}</td>
-                <td className="py-2">{s.round_name}</td>
-                <td className="py-2">{s.score}</td>
-                <td className="py-2">{s.golds ?? "—"}</td>
-                <td className="py-2">{s.bow_type ?? "—"}</td>
-                <td className="py-2">{s.age_category ?? "—"}</td>
-                <td className="py-2">{s.classification ?? "—"}</td>
-                <td className="py-2">{s.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DashboardClient
+          stats={stats}
+          recentScores={recentWithDiff}
+          personalBests={personalBests}
+          byBow={byBow}
+          sparklineData={sparklineData}
+          sparklineRound={sparklineRound}
+        />
       )}
-    </main>
+    </div>
   );
 }
