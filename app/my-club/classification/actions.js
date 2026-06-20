@@ -44,15 +44,23 @@ export async function bulkUpdateClassifications(updates, clubId) {
 
 // ── Threshold management ─────────────────────────────────────────────────────
 
-export async function saveThreshold(bow_type, age_category, gender, round_name, thresholds, clubId) {
+// Save threshold + record in history table (so we can always look up what the
+// thresholds were on any given date and re-apply by date range).
+export async function saveThreshold(bow_type, age_category, gender, round_name, thresholds, effective_from, clubId) {
   const supabase = await createClient();
-  await assertOfficer(supabase, clubId);
+  const user = await assertOfficer(supabase, clubId);
 
-  const { error } = await supabase.from("classification_thresholds")
-    .upsert({ bow_type, age_category, gender, round_name, thresholds, updated_at: new Date().toISOString() },
-      { onConflict: "bow_type,age_category,gender,round_name" });
+  const [upsertRes, histRes] = await Promise.all([
+    supabase.from("classification_thresholds")
+      .upsert(
+        { bow_type, age_category, gender, round_name, thresholds, updated_at: new Date().toISOString() },
+        { onConflict: "bow_type,age_category,gender,round_name" }
+      ),
+    supabase.from("classification_threshold_history")
+      .insert({ bow_type, age_category, gender, round_name, thresholds, effective_from, created_by: user.id }),
+  ]);
 
-  if (error) throw new Error(error.message);
+  if (upsertRes.error) throw new Error(upsertRes.error.message);
   revalidatePath("/my-club");
   return { ok: true };
 }
@@ -64,13 +72,15 @@ export async function deleteThresholdRow(id, clubId) {
   revalidatePath("/my-club");
 }
 
-// Auto-sync: recalculate classifications for all club member scores affected by
-// a threshold change (matched by bow_type, age_category key, gender, round_name).
-export async function autoSyncThreshold(bow_type, age_category, gender, round_name, thresholds, clubId) {
+// ── Sync scores against updated thresholds ───────────────────────────────────
+//
+// effective_from: ISO date string — only update scores shot on or after this date.
+//                 Pass null to update ALL scores (records keeper override).
+export async function syncThreshold(bow_type, age_category, gender, round_name, thresholds, effective_from, clubId) {
   const supabase = await createClient();
   await assertOfficer(supabase, clubId);
 
-  // Get club member profile IDs
+  // Resolve which member profiles match this bow/age/gender combination
   const { data: members } = await supabase
     .from("club_members")
     .select("profile_id, profiles(gender, age_category)")
@@ -78,18 +88,17 @@ export async function autoSyncThreshold(bow_type, age_category, gender, round_na
 
   if (!members?.length) return { synced: 0 };
 
-  // Filter to members whose gender + age_category map to this threshold key
   const AGE_MAP = {
     Senior: (c) => !["U12","U14","U15","U16","U18","50+","60+"].includes(c),
     "50+":  (c) => c === "50+" || c === "60+",
-    U18: (c) => c === "U18",
-    U16: (c) => c === "U16",
-    U15: (c) => c === "U15",
-    U14: (c) => c === "U14",
-    U12: (c) => c === "U12",
+    U18:    (c) => c === "U18",
+    U16:    (c) => c === "U16",
+    U15:    (c) => c === "U15",
+    U14:    (c) => c === "U14",
+    U12:    (c) => c === "U12",
   };
   const genderLabel = gender === "men" ? "Male" : "Female";
-  const ageMatch = AGE_MAP[age_category] ?? (() => false);
+  const ageMatch    = AGE_MAP[age_category] ?? (() => false);
 
   const targetProfiles = members
     .filter(m => m.profiles?.gender === genderLabel && ageMatch(m.profiles?.age_category ?? "Senior"))
@@ -97,17 +106,19 @@ export async function autoSyncThreshold(bow_type, age_category, gender, round_na
 
   if (!targetProfiles.length) return { synced: 0 };
 
-  // Fetch their scores for this round + bow
-  const { data: scores } = await supabase
+  // Fetch affected scores, optionally filtered by effective_from date
+  let query = supabase
     .from("scores")
     .select("id, score")
     .eq("bow_type", bow_type)
     .eq("round_name", round_name)
     .in("profile_id", targetProfiles);
 
+  if (effective_from) query = query.gte("shot_at", effective_from);
+
+  const { data: scores } = await query;
   if (!scores?.length) return { synced: 0 };
 
-  // Recalculate directly from thresholds (bypass ageKey mapping — we already filtered profiles)
   function applyThresholds(score) {
     let best = null;
     for (let i = 0; i < thresholds.length; i++) {

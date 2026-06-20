@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { LBL, getClassificationFromRows } from "@/lib/classification";
 import {
   updateScoreClassification,
   bulkUpdateClassifications,
   saveThreshold,
   deleteThresholdRow,
-  autoSyncThreshold,
+  syncThreshold,
 } from "./classification/actions";
 
 const AUTO_SCORE_KEY = "lghood_cls_autoupdate";
 const AUTO_THRESHOLD_KEY = "lghood_threshold_autosync";
+const TODAY = new Date().toISOString().slice(0, 10);
 
 const CLS_COLORS = {
   IGMB:"#a855f7", IMB:"#8b5cf6",
@@ -19,10 +20,10 @@ const CLS_COLORS = {
   IA1:"#22c55e",  IA2:"#4ade80", IA3:"#86efac",
 };
 
-const BOW_TYPES     = ["Recurve","Compound","Barebow","Longbow"];
-const AGE_CATS      = ["Senior","50+","U18","U16","U15","U14","U12"];
-const GENDERS       = ["men","women"];
-const GENDER_LABEL  = { men:"Men", women:"Women" };
+const BOW_TYPES    = ["Recurve","Compound","Barebow","Longbow"];
+const AGE_CATS     = ["Senior","50+","U18","U16","U15","U14","U12"];
+const GENDERS      = ["men","women"];
+const GENDER_LABEL = { men:"Men", women:"Women" };
 
 function ClsChip({ label }) {
   if (!label) return <span style={{ opacity:0.4, fontSize:12 }}>—</span>;
@@ -35,21 +36,58 @@ function ClsChip({ label }) {
   );
 }
 
+// ── Confirm "update all" dialog ──────────────────────────────────────────────
+
+function ConfirmAllDialog({ roundName, bowType, onConfirm, onCancel }) {
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"#00000088", zIndex:1000,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem",
+    }}>
+      <div style={{
+        background:"var(--background)", border:"1px solid var(--border)",
+        borderRadius:12, padding:"1.5rem", maxWidth:480, width:"100%",
+        display:"flex", flexDirection:"column", gap:"1rem",
+      }}>
+        <h3 style={{ margin:0, fontSize:16, fontWeight:700 }}>Update all historical scores?</h3>
+        <p style={{ margin:0, fontSize:14, lineHeight:1.6, opacity:0.8 }}>
+          This will reclassify <strong>every {bowType} {roundName} score on record</strong>,
+          regardless of when it was shot. Scores achieved before these thresholds came into
+          effect may no longer reflect the classification earned under the rules at the time.
+        </p>
+        <p style={{ margin:0, fontSize:14, lineHeight:1.6, opacity:0.8 }}>
+          Archery GB does not apply threshold changes retroactively — this option is provided
+          for data correction purposes only. Are you sure you want to continue?
+        </p>
+        <div style={{ display:"flex", gap:"0.75rem", justifyContent:"flex-end", marginTop:"0.25rem" }}>
+          <button onClick={onCancel} style={btnGhost}>Cancel</button>
+          <button onClick={onConfirm} style={{ ...btnPrimary, background:"#ef4444" }}>
+            Yes, update all scores
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Threshold Editor ─────────────────────────────────────────────────────────
 
-function ThresholdEditor({ thresholds, clubId, onSaved }) {
-  const [bow,     setBow]     = useState("Recurve");
-  const [age,     setAge]     = useState("Senior");
-  const [gender,  setGender]  = useState("men");
-  const [autoSync, setAutoSync] = useState(false);
-  const [editRow, setEditRow] = useState(null); // rowId being edited
-  const [editVals, setEditVals] = useState([]); // [8] ints
-  const [newRound, setNewRound] = useState("");
-  const [newVals,  setNewVals]  = useState(Array(8).fill(""));
-  const [showAdd,  setShowAdd]  = useState(false);
-  const [saving,   setSaving]   = useState(false);
-  const [syncMsg,  setSyncMsg]  = useState(null);
-  const [isPending, startTransition] = useTransition();
+function ThresholdEditor({ thresholds, clubId }) {
+  const [bow,         setBow]        = useState("Recurve");
+  const [age,         setAge]        = useState("Senior");
+  const [gender,      setGender]     = useState("men");
+  const [autoSync,    setAutoSync]   = useState(false);
+  const [editRow,     setEditRow]    = useState(null);
+  const [editVals,    setEditVals]   = useState([]);
+  const [editDate,    setEditDate]   = useState(TODAY);
+  const [newRound,    setNewRound]   = useState("");
+  const [newVals,     setNewVals]    = useState(Array(8).fill(""));
+  const [newDate,     setNewDate]    = useState(TODAY);
+  const [showAdd,     setShowAdd]    = useState(false);
+  const [saving,      setSaving]     = useState(false);
+  const [syncMsg,     setSyncMsg]    = useState(null);
+  const [confirmAll,  setConfirmAll] = useState(null); // {row, vals, date} pending confirm
+  const [isPending,   startTransition] = useTransition();
 
   useEffect(() => {
     setAutoSync(localStorage.getItem(AUTO_THRESHOLD_KEY) === "true");
@@ -64,63 +102,94 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
     r.bow_type === bow && r.age_category === age && r.gender === gender
   );
 
-  async function handleSave(row, vals) {
+  async function doSyncAndSave(round_name, parsed, effective_from, updateAll) {
     setSaving(true);
     setSyncMsg(null);
-    const parsed = vals.map(v => v === "" || v === null || v === undefined ? null : Number(v));
-    await saveThreshold(bow, age, gender, row.round_name, parsed, clubId);
+    await saveThreshold(bow, age, gender, round_name, parsed, effective_from, clubId);
     if (autoSync) {
-      const result = await autoSyncThreshold(bow, age, gender, row.round_name, parsed, clubId);
-      setSyncMsg(`Auto-synced ${result.synced} score${result.synced !== 1 ? "s" : ""}`);
+      const result = await syncThreshold(
+        bow, age, gender, round_name, parsed,
+        updateAll ? null : effective_from, // null = all scores
+        clubId
+      );
+      setSyncMsg(
+        updateAll
+          ? `Updated all ${result.synced} score${result.synced !== 1 ? "s" : ""} (full history)`
+          : `Updated ${result.synced} score${result.synced !== 1 ? "s" : ""} from ${effective_from} onwards`
+      );
     }
     setEditRow(null);
-    setSaving(false);
-    onSaved?.();
-  }
-
-  async function handleAdd() {
-    if (!newRound.trim()) return;
-    setSaving(true);
-    const parsed = newVals.map(v => v === "" ? null : Number(v));
-    await saveThreshold(bow, age, gender, newRound.trim(), parsed, clubId);
-    if (autoSync) {
-      const result = await autoSyncThreshold(bow, age, gender, newRound.trim(), parsed, clubId);
-      setSyncMsg(`Auto-synced ${result.synced} score${result.synced !== 1 ? "s" : ""}`);
-    }
-    setNewRound("");
-    setNewVals(Array(8).fill(""));
     setShowAdd(false);
     setSaving(false);
-    onSaved?.();
+    setConfirmAll(null);
+  }
+
+  function handleSaveClick(row) {
+    const parsed = editVals.map(v => v === "" || v == null ? null : Number(v));
+    // Always save + date-scoped sync immediately; "update all" goes via confirm dialog
+    doSyncAndSave(row.round_name, parsed, editDate, false);
+  }
+
+  function handleUpdateAll(row) {
+    const parsed = editVals.map(v => v === "" || v == null ? null : Number(v));
+    setConfirmAll({ round_name: row.round_name, parsed, date: editDate });
+  }
+
+  function handleAddSave(updateAll = false) {
+    if (!newRound.trim()) return;
+    const parsed = newVals.map(v => v === "" ? null : Number(v));
+    if (updateAll) {
+      setConfirmAll({ round_name: newRound.trim(), parsed, date: newDate, isNew: true });
+    } else {
+      doSyncAndSave(newRound.trim(), parsed, newDate, false);
+      setNewRound("");
+      setNewVals(Array(8).fill(""));
+      setNewDate(TODAY);
+    }
   }
 
   async function handleDelete(row) {
-    if (!confirm(`Delete thresholds for ${row.round_name}?`)) return;
+    if (!confirm(`Delete thresholds for "${row.round_name}"? This cannot be undone.`)) return;
     startTransition(() => deleteThresholdRow(row.id, clubId));
-    onSaved?.();
   }
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:"1rem" }}>
+
+      {confirmAll && (
+        <ConfirmAllDialog
+          roundName={confirmAll.round_name}
+          bowType={bow}
+          onConfirm={() => {
+            const { round_name, parsed, date, isNew } = confirmAll;
+            doSyncAndSave(round_name, parsed, date, true);
+            if (isNew) { setNewRound(""); setNewVals(Array(8).fill("")); setNewDate(TODAY); }
+          }}
+          onCancel={() => setConfirmAll(null)}
+        />
+      )}
+
       {/* Filter bar */}
       <div style={{ display:"flex", gap:"0.75rem", flexWrap:"wrap", alignItems:"center" }}>
-        <select value={bow} onChange={e=>setBow(e.target.value)} style={selectStyle}>
-          {BOW_TYPES.map(b=><option key={b}>{b}</option>)}
-        </select>
-        <select value={age} onChange={e=>setAge(e.target.value)} style={selectStyle}>
-          {AGE_CATS.map(a=><option key={a}>{a}</option>)}
-        </select>
-        <select value={gender} onChange={e=>setGender(e.target.value)} style={selectStyle}>
-          {GENDERS.map(g=><option key={g} value={g}>{GENDER_LABEL[g]}</option>)}
-        </select>
+        <select value={bow}    onChange={e=>setBow(e.target.value)}    style={selectStyle}>{BOW_TYPES.map(b=><option key={b}>{b}</option>)}</select>
+        <select value={age}    onChange={e=>setAge(e.target.value)}    style={selectStyle}>{AGE_CATS.map(a=><option key={a}>{a}</option>)}</select>
+        <select value={gender} onChange={e=>setGender(e.target.value)} style={selectStyle}>{GENDERS.map(g=><option key={g} value={g}>{GENDER_LABEL[g]}</option>)}</select>
         <label style={{ display:"flex", alignItems:"center", gap:"0.4rem", fontSize:13, cursor:"pointer", marginLeft:"auto" }}>
           <input type="checkbox" checked={autoSync} onChange={e=>toggleAutoSync(e.target.checked)} />
           Auto-sync scores on save
         </label>
       </div>
 
+      {autoSync && (
+        <p style={{ margin:0, fontSize:12, opacity:0.6, lineHeight:1.5 }}>
+          When enabled, saving a threshold will automatically reclassify member scores shot
+          on or after the effective date. Use "Update all historical scores" to override this
+          and reclassify everything on record.
+        </p>
+      )}
+
       {syncMsg && (
-        <div style={{ background:"#22c55e22", border:"1px solid #22c55e44", borderRadius:6, padding:"6px 12px", fontSize:13, color:"#22c55e" }}>
+        <div style={{ background:"#22c55e22", border:"1px solid #22c55e44", borderRadius:6, padding:"8px 12px", fontSize:13, color:"#22c55e" }}>
           {syncMsg}
         </div>
       )}
@@ -132,6 +201,7 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
             <tr style={{ background:"var(--card)", borderBottom:"1px solid var(--border)" }}>
               <th style={th}>Round</th>
               {LBL.map(l=><th key={l} style={{ ...th, color:CLS_COLORS[l] }}>{l}</th>)}
+              {autoSync && <th style={th}>Effective from</th>}
               <th style={th}></th>
             </tr>
           </thead>
@@ -139,7 +209,7 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
             {filtered.map((row, i) => {
               const isEditing = editRow === row.id;
               return (
-                <tr key={row.id} style={{ borderBottom: i < filtered.length-1 ? "1px solid var(--border)" : "none" }}>
+                <tr key={row.id} style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "none" }}>
                   <td style={{ ...td, fontWeight:500 }}>{row.round_name}</td>
                   {LBL.map((l, idx) => (
                     <td key={l} style={td}>
@@ -147,13 +217,8 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
                         <input
                           type="number"
                           value={editVals[idx] ?? ""}
-                          onChange={e => {
-                            const v = [...editVals];
-                            v[idx] = e.target.value;
-                            setEditVals(v);
-                          }}
-                          style={{ width:52, fontSize:11, padding:"2px 4px", borderRadius:3,
-                            background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)" }}
+                          onChange={e => { const v=[...editVals]; v[idx]=e.target.value; setEditVals(v); }}
+                          style={numInput}
                         />
                       ) : (
                         <span style={{ opacity: row.thresholds[idx] == null ? 0.3 : 1 }}>
@@ -162,19 +227,40 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
                       )}
                     </td>
                   ))}
+                  {autoSync && (
+                    <td style={td}>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          value={editDate}
+                          onChange={e=>setEditDate(e.target.value)}
+                          style={{ ...numInput, width:120 }}
+                        />
+                      ) : (
+                        <span style={{ opacity:0.5, fontSize:11 }}>
+                          {row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-GB") : "—"}
+                        </span>
+                      )}
+                    </td>
+                  )}
                   <td style={{ ...td, whiteSpace:"nowrap" }}>
                     {isEditing ? (
-                      <>
-                        <button onClick={() => handleSave(row, editVals)} disabled={saving} style={btnPrimary}>
-                          {saving ? "…" : "Save"}
+                      <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                        <button onClick={()=>handleSaveClick(row)} disabled={saving} style={btnPrimary}>
+                          {saving ? "Saving…" : autoSync ? `Save & sync from ${editDate}` : "Save"}
                         </button>
-                        <button onClick={() => setEditRow(null)} style={{ ...btnGhost, marginLeft:4 }}>✕</button>
-                      </>
+                        {autoSync && (
+                          <button onClick={()=>handleUpdateAll(row)} disabled={saving} style={{ ...btnGhost, color:"#f59e0b", borderColor:"#f59e0b55" }}>
+                            Update all historical scores
+                          </button>
+                        )}
+                        <button onClick={()=>setEditRow(null)} style={btnGhost}>✕</button>
+                      </div>
                     ) : (
-                      <>
-                        <button onClick={() => { setEditRow(row.id); setEditVals(row.thresholds.map(v=>v??"")); }} style={btnGhost}>Edit</button>
-                        <button onClick={() => handleDelete(row)} style={{ ...btnGhost, marginLeft:4, color:"#ef4444" }}>Del</button>
-                      </>
+                      <div style={{ display:"flex", gap:4 }}>
+                        <button onClick={()=>{ setEditRow(row.id); setEditVals(row.thresholds.map(v=>v??"")); setEditDate(TODAY); }} style={btnGhost}>Edit</button>
+                        <button onClick={()=>handleDelete(row)} style={{ ...btnGhost, color:"#ef4444" }}>Del</button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -190,8 +276,7 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
                     placeholder="Round name"
                     value={newRound}
                     onChange={e=>setNewRound(e.target.value)}
-                    style={{ width:110, fontSize:11, padding:"2px 4px", borderRadius:3,
-                      background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)" }}
+                    style={{ ...numInput, width:120 }}
                   />
                 </td>
                 {LBL.map((l, idx) => (
@@ -199,30 +284,41 @@ function ThresholdEditor({ thresholds, clubId, onSaved }) {
                     <input
                       type="number"
                       value={newVals[idx]}
-                      onChange={e => { const v=[...newVals]; v[idx]=e.target.value; setNewVals(v); }}
-                      style={{ width:52, fontSize:11, padding:"2px 4px", borderRadius:3,
-                        background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)" }}
+                      onChange={e=>{ const v=[...newVals]; v[idx]=e.target.value; setNewVals(v); }}
+                      style={numInput}
                     />
                   </td>
                 ))}
+                {autoSync && (
+                  <td style={td}>
+                    <input type="date" value={newDate} onChange={e=>setNewDate(e.target.value)} style={{ ...numInput, width:120 }} />
+                  </td>
+                )}
                 <td style={{ ...td, whiteSpace:"nowrap" }}>
-                  <button onClick={handleAdd} disabled={saving || !newRound.trim()} style={btnPrimary}>
-                    {saving ? "…" : "Add"}
-                  </button>
-                  <button onClick={() => setShowAdd(false)} style={{ ...btnGhost, marginLeft:4 }}>✕</button>
+                  <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                    <button onClick={()=>handleAddSave(false)} disabled={saving||!newRound.trim()} style={btnPrimary}>
+                      {saving ? "Adding…" : autoSync ? `Add & sync from ${newDate}` : "Add"}
+                    </button>
+                    {autoSync && (
+                      <button onClick={()=>handleAddSave(true)} disabled={saving||!newRound.trim()} style={{ ...btnGhost, color:"#f59e0b", borderColor:"#f59e0b55" }}>
+                        Add & update all
+                      </button>
+                    )}
+                    <button onClick={()=>setShowAdd(false)} style={btnGhost}>✕</button>
+                  </div>
                 </td>
               </tr>
             )}
 
             {!filtered.length && !showAdd && (
-              <tr><td colSpan={10} style={{ ...td, opacity:0.5, textAlign:"center" }}>No thresholds for this combination</td></tr>
+              <tr><td colSpan={autoSync ? 11 : 10} style={{ ...td, opacity:0.5, textAlign:"center" }}>No thresholds for this combination</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {!showAdd && (
-        <button onClick={() => setShowAdd(true)} style={{ ...btnGhost, alignSelf:"flex-start" }}>
+        <button onClick={()=>setShowAdd(true)} style={{ ...btnGhost, alignSelf:"flex-start" }}>
           + Add round
         </button>
       )}
@@ -243,26 +339,26 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
       : undefined;
     return {
       ...s,
-      archer: nameMap[s.profile_id],
+      archer:       nameMap[s.profile_id],
       gender,
-      calculated: calculated ?? null,
+      calculated:   calculated ?? null,
       noThresholds: calculated === undefined,
-      changed: calculated !== undefined && calculated !== s.classification,
+      changed:      calculated !== undefined && calculated !== s.classification,
     };
   });
 
-  const discrepancies    = audited.filter(s => s.changed);
+  const discrepancies     = audited.filter(s => s.changed);
   const noThresholdsCount = audited.filter(s => s.noThresholds).length;
   const correct           = audited.length - discrepancies.length - noThresholdsCount;
 
-  const [autoScore,  setAutoScore]  = useState(false);
-  const [countdown,  setCountdown]  = useState(null);
-  const [applied,    setApplied]    = useState({});
-  const [editing,    setEditing]    = useState({});
-  const [showAll,    setShowAll]    = useState(false);
-  const [activeTab,  setActiveTab]  = useState("audit"); // "audit" | "thresholds"
-  const [bulkMsg,    setBulkMsg]    = useState(null);
-  const [isPending,  startTransition] = useTransition();
+  const [autoScore,   setAutoScore]  = useState(false);
+  const [countdown,   setCountdown]  = useState(null);
+  const [applied,     setApplied]    = useState({});
+  const [editing,     setEditing]    = useState({});
+  const [showAll,     setShowAll]    = useState(false);
+  const [activeTab,   setActiveTab]  = useState("audit");
+  const [bulkMsg,     setBulkMsg]    = useState(null);
+  const [isPending,   startTransition] = useTransition();
 
   useEffect(() => {
     const saved = localStorage.getItem(AUTO_SCORE_KEY) === "true";
@@ -328,15 +424,12 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
         ))}
       </div>
 
-      {/* ── Threshold editor tab ── */}
       {activeTab === "thresholds" && (
         <ThresholdEditor thresholds={thresholds} clubId={clubId} />
       )}
 
-      {/* ── Score audit tab ── */}
       {activeTab === "audit" && (<>
 
-        {/* Controls */}
         <div style={{ display:"flex", alignItems:"center", gap:"1rem", flexWrap:"wrap" }}>
           <label style={{ display:"flex", alignItems:"center", gap:"0.4rem", fontSize:13, cursor:"pointer" }}>
             <input type="checkbox" checked={autoScore} onChange={e=>toggleAutoScore(e.target.checked)} />
@@ -347,10 +440,10 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
         {/* Summary cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:"0.75rem" }}>
           {[
-            { label:"Checked",       value:audited.length,           color:"var(--foreground)" },
-            { label:"Correct",       value:correct,                  color:"#22c55e" },
-            { label:"Discrepancies", value:pendingDiscrepancies.length, color:pendingDiscrepancies.length>0?"#f59e0b":"#22c55e" },
-            { label:"Unknown round", value:noThresholdsCount,        color:"var(--foreground)", dim:true },
+            { label:"Checked",        value:audited.length,               color:"var(--foreground)" },
+            { label:"Correct",        value:correct,                      color:"#22c55e" },
+            { label:"Discrepancies",  value:pendingDiscrepancies.length,  color:pendingDiscrepancies.length>0?"#f59e0b":"#22c55e" },
+            { label:"Unknown round",  value:noThresholdsCount,            color:"var(--foreground)", dim:true },
           ].map(stat=>(
             <div key={stat.label} style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:8, padding:"0.75rem 1rem" }}>
               <div style={{ fontSize:22, fontWeight:700, color:stat.color, opacity:stat.dim?0.4:1 }}>{stat.value}</div>
@@ -359,7 +452,6 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
           ))}
         </div>
 
-        {/* Countdown */}
         {countdown !== null && (
           <div style={{ background:"#f59e0b22", border:"1px solid #f59e0b55", borderRadius:8, padding:"0.75rem 1rem", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <span style={{ fontSize:14 }}>Auto-updating {pendingDiscrepancies.length} classification{pendingDiscrepancies.length!==1?"s":""} in {countdown}s…</span>
@@ -373,7 +465,6 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
           </div>
         )}
 
-        {/* Discrepancies */}
         {pendingDiscrepancies.length > 0 && countdown === null && (
           <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
@@ -402,9 +493,7 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
                       <td style={{ ...td, fontWeight:600 }}>{s.score}</td>
                       <td style={td}><ClsChip label={s.classification}/></td>
                       <td style={td}><ClsChip label={s.calculated}/></td>
-                      <td style={td}>
-                        <button onClick={()=>applyOne(s)} disabled={isPending} style={btnPrimary}>Apply</button>
-                      </td>
+                      <td style={td}><button onClick={()=>applyOne(s)} disabled={isPending} style={btnPrimary}>Apply</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -419,7 +508,6 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
           </div>
         )}
 
-        {/* All scores (collapsed) */}
         <div>
           <button onClick={()=>setShowAll(v=>!v)} style={btnGhost}>
             {showAll?"Hide":"Show"} all scores ({audited.length})
@@ -484,19 +572,9 @@ export default function ClassificationAuditTab({ scores, members, thresholds, cl
 }
 
 // Shared micro-styles
-const selectStyle = {
-  fontSize:13, padding:"5px 8px", borderRadius:6,
-  background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)",
-};
+const selectStyle = { fontSize:13, padding:"5px 8px", borderRadius:6, background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)" };
+const numInput    = { width:52, fontSize:11, padding:"2px 4px", borderRadius:3, background:"var(--background)", border:"1px solid var(--border)", color:"var(--foreground)" };
 const th = { padding:"8px 10px", textAlign:"left", fontWeight:600, opacity:0.7, whiteSpace:"nowrap" };
 const td = { padding:"8px 10px" };
-const btnPrimary = {
-  fontSize:12, padding:"4px 10px", borderRadius:4,
-  background:"var(--accent)", color:"var(--accent-foreground)",
-  border:"none", cursor:"pointer", fontWeight:600,
-};
-const btnGhost = {
-  fontSize:12, padding:"4px 10px", borderRadius:4,
-  background:"transparent", border:"1px solid var(--border)",
-  cursor:"pointer", color:"var(--foreground)",
-};
+const btnPrimary = { fontSize:12, padding:"4px 10px", borderRadius:4, background:"var(--accent)", color:"var(--accent-foreground)", border:"none", cursor:"pointer", fontWeight:600 };
+const btnGhost   = { fontSize:12, padding:"4px 10px", borderRadius:4, background:"transparent", border:"1px solid var(--border)", cursor:"pointer", color:"var(--foreground)" };
