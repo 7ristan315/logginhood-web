@@ -575,7 +575,7 @@ function guessArrows(round_name, arrowsArray) {
 }
 
 // ── Screenshot review ─────────────────────────────────────────────────────────
-function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
+function StepScreenshotReview({ scores, setScores, bowType, onNext, onReset }) {
   const activeScores   = scores.filter(s => !s._skip);
   const missingDates   = activeScores.filter(s => !s.date && !s._nodateok).length;
   const withDetail     = activeScores.filter(s => s.has_detail).length;
@@ -762,14 +762,24 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
         </table>
       </div>
 
-      <button onClick={onNext} disabled={!canProceed}
-        style={{
-          padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
-          border: "none", cursor: canProceed ? "pointer" : "not-allowed",
-          fontWeight: 600, fontSize: 14, opacity: canProceed ? 1 : 0.4, alignSelf: "flex-start",
-        }}>
-        Preview {activeScores.length} score{activeScores.length !== 1 ? "s" : ""} →
-      </button>
+      {activeScores.length === 0 ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 13, opacity: 0.6 }}>All rounds skipped — nothing to import.</span>
+          <button onClick={onReset}
+            style={{ padding: "8px 16px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
+            Start over
+          </button>
+        </div>
+      ) : (
+        <button onClick={onNext} disabled={!canProceed}
+          style={{
+            padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
+            border: "none", cursor: canProceed ? "pointer" : "not-allowed",
+            fontWeight: 600, fontSize: 14, opacity: canProceed ? 1 : 0.4, alignSelf: "flex-start",
+          }}>
+          Preview {activeScores.length} score{activeScores.length !== 1 ? "s" : ""} →
+        </button>
+      )}
     </div>
   );
 }
@@ -966,6 +976,7 @@ export default function ImportWizard({ userId, isOfficer, members }) {
           setScores={setSsScores}
           bowType={ssBowType}
           onNext={() => setStep("preview")}
+          onReset={reset}
         />
       )}
 
