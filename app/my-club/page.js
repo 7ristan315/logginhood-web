@@ -135,14 +135,21 @@ export default async function MyClubPage({ searchParams }) {
 
   // === Classifications ===
   const isRecordsOfficer = ["records_keeper", "chairman", "secretary"].includes(userRole);
-  let clsScores = [];
+  let clsScores = [], clsThresholds = [];
   if (tab === "classifications" && isRecordsOfficer) {
-    const { data: rawCls } = await supabase
-      .from("scores")
-      .select("id, profile_id, round_name, score, bow_type, age_category, classification")
-      .in("profile_id", memberIds.length ? memberIds : ["__none__"])
-      .order("shot_at", { ascending: false });
-    clsScores = rawCls ?? [];
+    const [scoresRes, threshRes] = await Promise.all([
+      supabase
+        .from("scores")
+        .select("id, profile_id, round_name, score, bow_type, age_category, classification")
+        .in("profile_id", memberIds.length ? memberIds : ["__none__"])
+        .order("shot_at", { ascending: false }),
+      supabase
+        .from("classification_thresholds")
+        .select("id, bow_type, age_category, gender, round_name, thresholds, updated_at")
+        .order("bow_type").order("age_category").order("gender").order("round_name"),
+    ]);
+    clsScores      = scoresRes.data ?? [];
+    clsThresholds  = threshRes.data ?? [];
   }
 
   // === Trophies ===
@@ -217,7 +224,7 @@ export default async function MyClubPage({ searchParams }) {
         />
       )}
       {tab === "classifications" && isRecordsOfficer && (
-        <ClassificationAuditTab scores={clsScores} members={members || []} clubId={clubId} />
+        <ClassificationAuditTab scores={clsScores} members={members || []} thresholds={clsThresholds} clubId={clubId} />
       )}
       {tab === "badge-admin" && isBadgeAdmin && (
         <BadgeAdminTab
