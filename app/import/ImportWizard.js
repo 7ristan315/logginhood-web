@@ -602,10 +602,7 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onReset }) {
     setScores(prev => prev.map(s => ({ ...s, arrows_used: guessArrows(s.round_name, s.arrows) })));
   }
 
-  // Can proceed when all non-skipped scores either have a date, or the user picked
-  // a mode that resolves missing dates (skip=resolved by excluding, onedate=resolved when applied)
-  const pendingDates = scores.filter(s => !s._skip && !s.date).length;
-  const canProceed = activeScores.length > 0 && pendingDates === 0;
+  const canProceed = activeScores.length > 0;
   const skippedCount = scores.filter(s => s._skip).length;
 
   return (
