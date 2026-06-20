@@ -33,7 +33,7 @@ function normaliseBow(s) {
   return BOW_MAP[s.toLowerCase().trim()] ?? s;
 }
 
-// rows: [{profile_id, round_name, score, golds, shot_at, bow_type, age_category, classification}]
+// rows: [{profile_id, round_name, score, golds, shot_at, bow_type, age_category, classification, arrows_used}]
 export async function importRows(rows) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -83,6 +83,7 @@ export async function importRows(rows) {
       bow_type: normaliseBow(row.bow_type),
       age_category: row.age_category?.trim() || null,
       classification: row.classification?.trim() || null,
+      arrows_used: row.arrows_used ? (parseInt(row.arrows_used) || null) : null,
       status: "submitted",
     });
   }

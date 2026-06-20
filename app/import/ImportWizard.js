@@ -552,107 +552,169 @@ function StepScreenshotUpload({ onProcess }) {
   );
 }
 
+// Common AGB round arrow counts
+const ROUND_ARROWS = {
+  "Portsmouth": 60, "WA 18m": 60, "Bray I": 30, "Bray II": 30,
+  "Vegas 300": 30, "Vegas (Triple Face)": 30, "Worcester": 60,
+  "Stafford": 120, "Windsor": 108, "Windsor 50": 108, "Short Windsor": 72,
+  "York": 144, "Hereford": 144,
+  "Bristol I": 144, "Bristol II": 144, "Bristol III": 144, "Bristol IV": 144, "Bristol V": 144,
+  "American": 90, "St George": 108, "Albion": 108, "Long Bow": 108,
+  "Western": 96, "Windsor 40": 108,
+  "Long Metric I": 72, "Long Metric II": 72, "Long Metric III": 72,
+  "Long Metric IV": 72, "Long Metric V": 72, "Long Metric": 72,
+  "Short Metric I": 72, "Short Metric II": 72, "Short Metric III": 72,
+  "Short Metric IV": 72, "Short Metric V": 72, "Short Metric": 72,
+  "National": 96, "National 30": 48, "Junior National": 48,
+  "Junior Western": 72, "Junior Windsor": 72, "Warwick": 72, "Warwick 30": 72,
+};
+
+function guessArrows(round_name, arrowsArray) {
+  if (arrowsArray?.length) return arrowsArray.length;
+  return ROUND_ARROWS[round_name] ?? null;
+}
+
 // ── Screenshot review ─────────────────────────────────────────────────────────
 function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
-  const missingDates = scores.filter(s => !s.date).length;
-  const [bulkDate, setBulkDate] = useState("");
+  const activeScores   = scores.filter(s => !s._skip);
+  const missingDates   = activeScores.filter(s => !s.date).length;
+  const [bulkDate,     setBulkDate]   = useState("");
+  const [bulkArrows,   setBulkArrows] = useState("");
+  const [arrowsMode,   setArrowsMode] = useState("auto"); // "auto"|"bulk"|"later"
 
   function updateRow(i, field, val) {
     setScores(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
   }
-  function removeRow(i) {
-    setScores(prev => prev.filter((_, idx) => idx !== i));
+  function toggleSkip(i) {
+    setScores(prev => prev.map((s, idx) => idx === i ? { ...s, _skip: !s._skip } : s));
   }
-  function applyBulkDate() {
+  function applyBulkDate(missingOnly) {
     if (!bulkDate) return;
-    setScores(prev => prev.map(s => s.date ? s : { ...s, date: bulkDate }));
+    setScores(prev => prev.map(s => (missingOnly && s.date) ? s : { ...s, date: bulkDate }));
   }
-  function applyBulkDateAll() {
-    if (!bulkDate) return;
-    setScores(prev => prev.map(s => ({ ...s, date: bulkDate })));
+  function applyBulkArrows() {
+    if (!bulkArrows) return;
+    setScores(prev => prev.map(s => ({ ...s, arrows_used: parseInt(bulkArrows) || null })));
   }
+  function applyAutoArrows() {
+    setScores(prev => prev.map(s => ({ ...s, arrows_used: guessArrows(s.round_name, s.arrows) })));
+  }
+
+  const canProceed = missingDates === 0 && activeScores.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Review extracted scores</h2>
         <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
-          {scores.length} rounds found · {missingDates > 0 ? `${missingDates} missing dates — fill these in below` : "All dates found ✓"}
+          {scores.length} rounds found · {scores.filter(s=>s._skip).length > 0 ? `${scores.filter(s=>s._skip).length} skipped · ` : ""}
+          {missingDates > 0 ? `${missingDates} missing dates` : "All dates set ✓"}
         </p>
       </div>
 
+      {/* Date bulk tool */}
       {missingDates > 0 && (
-        <>
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", fontSize: 13, lineHeight: 1.5 }}>
-            <strong>Dates could not be extracted</strong> — this usually means you only uploaded individual round screens without the history list. The history list (showing all your rounds grouped by date) is needed for dates to be picked up automatically.
-            <br />You can fill in dates individually below, or use the bulk tool to set them all at once.
-          </div>
-
-          {/* Bulk date setter */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "var(--card)", border: "1px solid var(--border)", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>Set date for missing rounds:</span>
-            <input
-              type="date"
-              value={bulkDate}
-              onChange={e => setBulkDate(e.target.value)}
-              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" }}
-            />
-            <button onClick={applyBulkDate} disabled={!bulkDate}
-              style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: bulkDate ? "pointer" : "not-allowed", fontWeight: 600, opacity: bulkDate ? 1 : 0.4 }}>
-              Apply to missing ({missingDates})
-            </button>
-            <button onClick={applyBulkDateAll} disabled={!bulkDate}
-              style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, background: "transparent", color: "var(--foreground)", border: "1px solid var(--border)", cursor: bulkDate ? "pointer" : "not-allowed", opacity: bulkDate ? 1 : 0.4 }}>
-              Apply to all
-            </button>
-          </div>
-        </>
+        <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", fontSize: 13, lineHeight: 1.5 }}>
+          <strong>Dates could not be extracted</strong> — include the history list screenshot (showing all rounds grouped by date) to have dates picked up automatically. For now, use the bulk tool below or fill each row individually.
+        </div>
       )}
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "10px 14px", borderRadius: 8, background: "var(--card)", border: "1px solid var(--border)" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, minWidth: 80 }}>Set date:</span>
+        <input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)}
+          style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" }} />
+        <button onClick={() => applyBulkDate(true)} disabled={!bulkDate}
+          style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: bulkDate ? "pointer" : "not-allowed", opacity: bulkDate ? 1 : 0.4 }}>
+          Apply to missing {missingDates > 0 ? `(${missingDates})` : ""}
+        </button>
+        <button onClick={() => applyBulkDate(false)} disabled={!bulkDate}
+          style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "transparent", border: "1px solid var(--border)", cursor: bulkDate ? "pointer" : "not-allowed", color: "var(--foreground)", opacity: bulkDate ? 1 : 0.4 }}>
+          Apply to all
+        </button>
+      </div>
+
+      {/* Arrows bulk tool */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "10px 14px", borderRadius: 8, background: "var(--card)", border: "1px solid var(--border)" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, minWidth: 80 }}>Arrows used:</span>
+        <button onClick={applyAutoArrows}
+          style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer" }}>
+          Auto-fill by round type
+        </button>
+        <input type="number" placeholder="or set all to…" value={bulkArrows} onChange={e => setBulkArrows(e.target.value)}
+          style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)", width: 120 }} />
+        <button onClick={applyBulkArrows} disabled={!bulkArrows}
+          style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "transparent", border: "1px solid var(--border)", cursor: bulkArrows ? "pointer" : "not-allowed", color: "var(--foreground)", opacity: bulkArrows ? 1 : 0.4 }}>
+          Apply to all
+        </button>
+        <span style={{ fontSize: 11, opacity: 0.5 }}>or leave blank to set later</span>
+      </div>
 
       <div style={{ border: "1px solid var(--accent-light)", borderRadius: 10, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "var(--accent-light)" }}>
-              {["Round","Date","Score","Golds","Detail",""].map(h => (
+              {["Round","Date","Score","Golds","Arrows","Data","Import?"].map(h => (
                 <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 600, opacity: 0.6, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {scores.map((s, i) => (
-              <tr key={i} style={{ borderTop: "1px solid var(--accent-light)", background: !s.date ? "rgba(245,158,11,0.05)" : "transparent" }}>
-                <td style={{ padding: "6px 10px" }}>
-                  <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
-                    style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 130 }} />
-                </td>
-                <td style={{ padding: "6px 10px" }}>
-                  <input type="date" value={s.date || ""} onChange={e => updateRow(i, "date", e.target.value)}
-                    style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: `1px solid ${!s.date ? "#f59e0b" : "var(--accent-light)"}`, background: "var(--background)", color: "var(--foreground)" }} />
-                </td>
-                <td style={{ padding: "6px 10px", fontWeight: 700, color: "var(--accent)" }}>{s.score}</td>
-                <td style={{ padding: "6px 10px", opacity: 0.6 }}>{s.golds ?? "—"}</td>
-                <td style={{ padding: "6px 10px" }}>
-                  {s.has_detail
-                    ? <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>✓ {s.arrows?.length} arrows</span>
-                    : <span style={{ fontSize: 11, opacity: 0.35 }}>totals only</span>}
-                </td>
-                <td style={{ padding: "6px 6px" }}>
-                  <button onClick={() => removeRow(i)}
-                    style={{ fontSize: 14, color: "#dc2626", background: "none", border: "none", cursor: "pointer", opacity: 0.5, padding: 0 }}>×</button>
-                </td>
-              </tr>
-            ))}
+            {scores.map((s, i) => {
+              const skipped = !!s._skip;
+              const rowStyle = {
+                borderTop: "1px solid var(--accent-light)",
+                opacity: skipped ? 0.4 : 1,
+                background: !skipped && !s.date ? "rgba(245,158,11,0.05)" : "transparent",
+              };
+              return (
+                <tr key={i} style={rowStyle}>
+                  <td style={{ padding: "6px 10px" }}>
+                    <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
+                      disabled={skipped}
+                      style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 120 }} />
+                  </td>
+                  <td style={{ padding: "6px 10px" }}>
+                    <input type="date" value={s.date || ""} onChange={e => updateRow(i, "date", e.target.value)}
+                      disabled={skipped}
+                      style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: `1px solid ${!skipped && !s.date ? "#f59e0b" : "var(--accent-light)"}`, background: "var(--background)", color: "var(--foreground)" }} />
+                  </td>
+                  <td style={{ padding: "6px 10px", fontWeight: 700, color: skipped ? "inherit" : "var(--accent)" }}>{s.score}</td>
+                  <td style={{ padding: "6px 10px", opacity: 0.6 }}>{s.golds ?? "—"}</td>
+                  <td style={{ padding: "6px 10px" }}>
+                    <input type="number" value={s.arrows_used ?? ""} onChange={e => updateRow(i, "arrows_used", e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={skipped} placeholder="—"
+                      style={{ fontSize: 12, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 52 }} />
+                  </td>
+                  <td style={{ padding: "6px 10px" }}>
+                    {s.has_detail
+                      ? <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>✓ arrow data</span>
+                      : <span style={{ fontSize: 11, opacity: 0.35 }}>totals only</span>}
+                  </td>
+                  <td style={{ padding: "6px 10px" }}>
+                    <button onClick={() => toggleSkip(i)} style={{
+                      fontSize: 11, padding: "3px 8px", borderRadius: 4, fontWeight: 600,
+                      background: skipped ? "transparent" : "var(--accent)",
+                      color: skipped ? "var(--foreground)" : "var(--accent-foreground)",
+                      border: skipped ? "1px solid var(--border)" : "none",
+                      cursor: "pointer",
+                    }}>
+                      {skipped ? "Skip" : "Import"}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      <button onClick={onNext} disabled={missingDates > 0 || scores.length === 0}
+      <button onClick={onNext} disabled={!canProceed}
         style={{
           padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
-          border: "none", cursor: missingDates > 0 || scores.length === 0 ? "not-allowed" : "pointer",
-          fontWeight: 600, fontSize: 14, opacity: missingDates > 0 || scores.length === 0 ? 0.4 : 1, alignSelf: "flex-start",
+          border: "none", cursor: canProceed ? "pointer" : "not-allowed",
+          fontWeight: 600, fontSize: 14, opacity: canProceed ? 1 : 0.4, alignSelf: "flex-start",
         }}>
-        Preview import →
+        Preview {activeScores.length} score{activeScores.length !== 1 ? "s" : ""} →
       </button>
     </div>
   );
@@ -734,16 +796,17 @@ export default function ImportWizard({ userId, isOfficer, members }) {
   function getReadyRows() {
     if (source === "screenshots") {
       return ssScores
-        .filter(s => s.date && s.round_name && s.score)
+        .filter(s => !s._skip && s.date && s.round_name && s.score)
         .map(s => ({
-          profile_id:  userId,
-          round_name:  s.round_name,
-          score:       parseInt(s.score),
-          golds:       s.golds != null ? parseInt(s.golds) : null,
-          shot_at:     s.date,
-          bow_type:    ssBowType || null,
+          profile_id:   userId,
+          round_name:   s.round_name,
+          score:        parseInt(s.score),
+          golds:        s.golds != null ? parseInt(s.golds) : null,
+          shot_at:      s.date,
+          bow_type:     ssBowType || null,
           age_category: null,
           classification: null,
+          arrows_used:  s.arrows_used ?? guessArrows(s.round_name, s.arrows),
         }));
     }
     const mapped = getMappedRows();
