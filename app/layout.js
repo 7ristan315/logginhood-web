@@ -25,7 +25,11 @@ export default async function RootLayout({ children }) {
       .select("full_name, bow_type, platform_admin, clubs(id, name)")
       .eq("id", user.id)
       .single();
-    profile = data;
+    // Fall back to auth metadata for name if profile not yet populated
+    profile = {
+      ...data,
+      full_name: data?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || null,
+    };
   }
 
   return (
