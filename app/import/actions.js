@@ -68,9 +68,8 @@ export async function importRows(rows) {
   const valid = [];
   const errors = [];
   for (const row of rows) {
-    const shot_at = parseDate(row.shot_at);
+    const shot_at = parseDate(row.shot_at) ?? null;
     const score = parseInt(row.score);
-    if (!shot_at) { errors.push(`Bad date: "${row.shot_at}"`); continue; }
     if (isNaN(score)) { errors.push(`Bad score: "${row.score}"`); continue; }
     if (!row.round_name?.trim()) { errors.push("Missing round name"); continue; }
     valid.push({

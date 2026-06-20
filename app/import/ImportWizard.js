@@ -577,11 +577,12 @@ function guessArrows(round_name, arrowsArray) {
 // ── Screenshot review ─────────────────────────────────────────────────────────
 function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
   const activeScores   = scores.filter(s => !s._skip);
-  const missingDates   = activeScores.filter(s => !s.date).length;
+  const missingDates   = activeScores.filter(s => !s.date && !s._nodateok).length;
   const withDetail     = activeScores.filter(s => s.has_detail).length;
   const totalsOnly     = activeScores.length - withDetail;
-  const [bulkDate,     setBulkDate]   = useState("");
-  const [bulkArrows,   setBulkArrows] = useState("");
+  const [bulkDate,     setBulkDate]     = useState("");
+  const [bulkDateMode, setBulkDateMode] = useState(""); // "skip"|"perrow"|"onedate"
+  const [bulkArrows,   setBulkArrows]   = useState("");
 
   function updateRow(i, field, val) {
     setScores(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
@@ -601,7 +602,10 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
     setScores(prev => prev.map(s => ({ ...s, arrows_used: guessArrows(s.round_name, s.arrows) })));
   }
 
-  const canProceed = missingDates === 0 && activeScores.length > 0;
+  // Can proceed when all non-skipped scores either have a date, or the user picked
+  // a mode that resolves missing dates (skip=resolved by excluding, onedate=resolved when applied)
+  const pendingDates = scores.filter(s => !s._skip && !s.date).length;
+  const canProceed = activeScores.length > 0 && pendingDates === 0;
   const skippedCount = scores.filter(s => s._skip).length;
 
   return (
@@ -623,26 +627,68 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
         </div>
       )}
 
-      {/* Missing dates warning + bulk date tool */}
-      {missingDates > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b" }}>
-          <p style={{ margin: 0, fontSize: 13, color: "#92400e", lineHeight: 1.5 }}>
-            <strong>Dates could not be extracted.</strong> Set them below — or re-upload including the history list screenshot (the scrollable list of all rounds grouped by date).
-          </p>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)}
-              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid #f59e0b", background: "var(--background)", color: "var(--foreground)" }} />
-            <button onClick={() => applyBulkDate(true)} disabled={!bulkDate}
-              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "#f59e0b", color: "#000", border: "none", cursor: bulkDate ? "pointer" : "not-allowed", fontWeight: 600, opacity: bulkDate ? 1 : 0.5 }}>
-              Apply to missing ({missingDates})
-            </button>
-            <button onClick={() => applyBulkDate(false)} disabled={!bulkDate}
-              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, background: "transparent", border: "1px solid #f59e0b", cursor: bulkDate ? "pointer" : "not-allowed", color: "#92400e", opacity: bulkDate ? 1 : 0.5 }}>
-              Apply to all
-            </button>
+      {/* Missing dates — grouped decision */}
+      {missingDates > 0 && (() => {
+        const opts = [
+          {
+            id: "skip",
+            label: `Don't import these ${missingDates} rounds`,
+            sub: "They'll be excluded. You can re-import later with detail screens alongside a history list.",
+          },
+          {
+            id: "perrow",
+            label: "Set dates individually in the table below",
+            sub: "Each row has a date picker — fill them in before continuing.",
+          },
+          {
+            id: "onedate",
+            label: `Use one date for all ${missingDates} rounds`,
+            sub: "Pick a single date to apply to every round missing a date.",
+          },
+        ];
+        return (
+          <div style={{ padding: "12px 14px", borderRadius: 10, background: "#fef3c7", border: "1px solid #f59e0b", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontWeight: 600, fontSize: 13, color: "#92400e" }}>
+              {missingDates} round{missingDates !== 1 ? "s" : ""} without a date — how would you like to handle them?
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {opts.map(opt => (
+                <label key={opt.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "9px 12px", borderRadius: 8, border: `1px solid ${bulkDateMode === opt.id ? "#92400e" : "#f59e0b"}`, background: bulkDateMode === opt.id ? "rgba(245,158,11,0.15)" : "transparent" }}>
+                  <input type="radio" name="nodatemode" value={opt.id} checked={bulkDateMode === opt.id}
+                    onChange={() => {
+                      setBulkDateMode(opt.id);
+                      if (opt.id === "skip") {
+                        setScores(prev => prev.map(s => !s.date ? { ...s, _skip: true, _nodateok: false } : s));
+                      } else if (opt.id === "perrow") {
+                        setScores(prev => prev.map(s => !s.date ? { ...s, _skip: false, _nodateok: false } : s));
+                      } else {
+                        setScores(prev => prev.map(s => !s.date ? { ...s, _skip: false, _nodateok: false } : s));
+                      }
+                    }}
+                    style={{ marginTop: 2, accentColor: "#92400e" }} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "#92400e" }}>{opt.label}</div>
+                    <div style={{ fontSize: 12, color: "#92400e", opacity: 0.7 }}>{opt.sub}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {bulkDateMode === "onedate" && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 4 }}>
+                <input type="date" value={bulkDate} onChange={e => { setBulkDate(e.target.value); }}
+                  style={{ fontSize: 13, padding: "5px 8px", borderRadius: 6, border: "1px solid #f59e0b", background: "var(--background)", color: "var(--foreground)" }} />
+                <button onClick={() => {
+                  if (!bulkDate) return;
+                  setScores(prev => prev.map(s => !s.date ? { ...s, date: bulkDate, _skip: false, _nodateok: false } : s));
+                }} disabled={!bulkDate}
+                  style={{ fontSize: 13, padding: "5px 14px", borderRadius: 6, background: "#f59e0b", color: "#000", border: "none", cursor: bulkDate ? "pointer" : "not-allowed", fontWeight: 700, opacity: bulkDate ? 1 : 0.4 }}>
+                  Apply to {missingDates} rounds
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Arrows bulk tool — collapsed look */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 12, opacity: 0.7 }}>
@@ -804,7 +850,7 @@ export default function ImportWizard({ userId, isOfficer, members }) {
   function getReadyRows() {
     if (source === "screenshots") {
       return ssScores
-        .filter(s => !s._skip && s.date && s.round_name && s.score)
+        .filter(s => !s._skip && s.round_name && s.score)
         .map(s => ({
           profile_id:   userId,
           round_name:   s.round_name,
