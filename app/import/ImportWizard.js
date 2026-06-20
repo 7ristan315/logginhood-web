@@ -555,12 +555,21 @@ function StepScreenshotUpload({ onProcess }) {
 // ── Screenshot review ─────────────────────────────────────────────────────────
 function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
   const missingDates = scores.filter(s => !s.date).length;
+  const [bulkDate, setBulkDate] = useState("");
 
   function updateRow(i, field, val) {
     setScores(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
   }
   function removeRow(i) {
     setScores(prev => prev.filter((_, idx) => idx !== i));
+  }
+  function applyBulkDate() {
+    if (!bulkDate) return;
+    setScores(prev => prev.map(s => s.date ? s : { ...s, date: bulkDate }));
+  }
+  function applyBulkDateAll() {
+    if (!bulkDate) return;
+    setScores(prev => prev.map(s => ({ ...s, date: bulkDate })));
   }
 
   return (
@@ -573,9 +582,31 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext }) {
       </div>
 
       {missingDates > 0 && (
-        <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", fontSize: 13 }}>
-          ⚠️ {missingDates} round{missingDates !== 1 ? "s are" : " is"} missing a date — this happens when you only uploaded detail screens without the history list. Add a date for each highlighted row or delete ones you don't need.
-        </div>
+        <>
+          <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", fontSize: 13, lineHeight: 1.5 }}>
+            <strong>Dates could not be extracted</strong> — this usually means you only uploaded individual round screens without the history list. The history list (showing all your rounds grouped by date) is needed for dates to be picked up automatically.
+            <br />You can fill in dates individually below, or use the bulk tool to set them all at once.
+          </div>
+
+          {/* Bulk date setter */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "var(--card)", border: "1px solid var(--border)", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>Set date for missing rounds:</span>
+            <input
+              type="date"
+              value={bulkDate}
+              onChange={e => setBulkDate(e.target.value)}
+              style={{ fontSize: 13, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" }}
+            />
+            <button onClick={applyBulkDate} disabled={!bulkDate}
+              style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: bulkDate ? "pointer" : "not-allowed", fontWeight: 600, opacity: bulkDate ? 1 : 0.4 }}>
+              Apply to missing ({missingDates})
+            </button>
+            <button onClick={applyBulkDateAll} disabled={!bulkDate}
+              style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, background: "transparent", color: "var(--foreground)", border: "1px solid var(--border)", cursor: bulkDate ? "pointer" : "not-allowed", opacity: bulkDate ? 1 : 0.4 }}>
+              Apply to all
+            </button>
+          </div>
+        </>
       )}
 
       <div style={{ border: "1px solid var(--accent-light)", borderRadius: 10, overflow: "hidden" }}>
