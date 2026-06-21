@@ -605,21 +605,15 @@ function StepDetailUpload({ scores, onProcess, onSkip }) {
 }
 
 // Common AGB round arrow counts
-const ROUND_ARROWS = {
-  "Portsmouth": 60, "WA 18m": 60, "Bray I": 30, "Bray II": 30,
-  "Vegas 300": 30, "Vegas (Triple Face)": 30, "Worcester": 60,
-  "Stafford": 120, "Windsor": 108, "Windsor 50": 108, "Short Windsor": 72,
-  "York": 144, "Hereford": 144,
-  "Bristol I": 144, "Bristol II": 144, "Bristol III": 144, "Bristol IV": 144, "Bristol V": 144,
-  "American": 90, "St George": 108, "Albion": 108, "Long Bow": 108,
-  "Western": 96, "Windsor 40": 108,
-  "Long Metric I": 72, "Long Metric II": 72, "Long Metric III": 72,
-  "Long Metric IV": 72, "Long Metric V": 72, "Long Metric": 72,
-  "Short Metric I": 72, "Short Metric II": 72, "Short Metric III": 72,
-  "Short Metric IV": 72, "Short Metric V": 72, "Short Metric": 72,
-  "National": 96, "National 30": 48, "Junior National": 48,
-  "Junior Western": 72, "Junior Windsor": 72, "Warwick": 72, "Warwick 30": 72,
-};
+// Derive arrow counts from ROUNDS definitions
+function buildRoundArrows() {
+  const map = {};
+  for (const [name, r] of Object.entries(ROUNDS)) {
+    map[name] = r.ends * r.arrowsPerEnd;
+  }
+  return map;
+}
+const ROUND_ARROWS = buildRoundArrows();
 
 function guessArrows(round_name, arrowsArray) {
   if (arrowsArray?.length) return arrowsArray.length;
