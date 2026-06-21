@@ -82,7 +82,7 @@ export async function importRows(rows) {
       age_category: row.age_category?.trim() || null,
       classification: row.classification?.trim() || null,
       arrows_used: row.arrows_used ? (parseInt(row.arrows_used) || null) : null,
-      status: "submitted",
+      status: "Practice",
     };
     if (shot_at) entry.shot_at = shot_at;
     valid.push(entry);
