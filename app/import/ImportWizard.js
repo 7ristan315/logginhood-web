@@ -392,9 +392,9 @@ function StepDone({ result, onReset }) {
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 const CSV_STEPS = ["mode","upload","mapping","review","names","preview","done"];
-const SS_STEPS  = ["mode","ss_upload","ss_reading","ss_review","preview","done"];
+const SS_STEPS  = ["mode","ss_history","ss_reading","ss_review","ss_detail","ss_detail_reading","preview","done"];
 const CSV_LABELS = { mode:"Method", upload:"Upload", mapping:"Reading", review:"Review", names:"Match archers", preview:"Confirm", done:"Done" };
-const SS_LABELS  = { mode:"Method", ss_upload:"Upload", ss_reading:"Reading", ss_review:"Review", preview:"Confirm", done:"Done" };
+const SS_LABELS  = { mode:"Method", ss_history:"History", ss_reading:"Reading", ss_review:"Review", ss_detail:"Detail", ss_detail_reading:"Reading", preview:"Confirm", done:"Done" };
 
 const BOW_TYPES = ["Recurve","Compound","Barebow","Longbow"];
 
@@ -438,82 +438,17 @@ function StepModeSelect({ onCsv, onScreenshots }) {
   );
 }
 
-// ── Screenshot upload ─────────────────────────────────────────────────────────
-function StepScreenshotUpload({ onProcess }) {
-  const [images, setImages] = useState([]); // {file, preview}
-  const [bowType, setBowType] = useState("");
+// ── Shared image picker ───────────────────────────────────────────────────────
+function ImagePicker({ images, setImages, label, hint }) {
   const inputRef = useRef();
-
   function addFiles(files) {
-    const newImgs = Array.from(files)
-      .filter(f => f.type.startsWith("image/"))
+    const newImgs = Array.from(files).filter(f => f.type.startsWith("image/"))
       .map(f => ({ file: f, preview: URL.createObjectURL(f) }));
     setImages(prev => [...prev, ...newImgs]);
   }
-
-  function remove(i) {
-    setImages(prev => prev.filter((_, idx) => idx !== i));
-  }
-
-  async function tileImage(dataUrl) {
-    return new Promise(res => {
-      const img = new Image();
-      img.onload = () => {
-        const { naturalWidth: w, naturalHeight: h } = img;
-        if (h <= 2000) { res([dataUrl]); return; }
-        // Tile into sections; scale output to max 800px wide so payload stays small
-        // but text is still fully legible for Claude
-        const maxOutW = 800;
-        const scale   = maxOutW / w;
-        const tileH   = Math.round(1400 / scale); // source pixels per tile
-        const overlap  = Math.round(200  / scale); // source pixels overlap
-        const outH     = Math.round(tileH * scale);
-        const tiles = [];
-        const canvas = document.createElement("canvas");
-        canvas.width  = maxOutW;
-        for (let y = 0; y < h; y += tileH - overlap) {
-          const sliceH = Math.min(tileH, h - y);
-          canvas.height = Math.round(sliceH * scale);
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, y, w, sliceH, 0, 0, maxOutW, Math.round(sliceH * scale));
-          tiles.push(canvas.toDataURL("image/jpeg", 0.85));
-        }
-        res(tiles);
-      };
-      img.src = dataUrl;
-    });
-  }
-
-  async function process() {
-    const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = e => res(e.target.result);
-      reader.onerror = rej;
-      reader.readAsDataURL(img.file);
-    })));
-    // Tile tall images so Claude can read small text clearly
-    const tiled = (await Promise.all(base64s.map(tileImage))).flat();
-    onProcess(tiled, bowType);
-  }
-
+  function remove(i) { setImages(prev => prev.filter((_, idx) => idx !== i)); }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Upload your screenshots</h2>
-        <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
-          Screenshot your score <strong>history list</strong> in your app (scroll through and capture each page). Optionally add individual round screenshots for full arrow detail.
-        </p>
-      </div>
-
-      {/* Tips */}
-      <div style={{ padding: 12, borderRadius: 10, background: "var(--accent-light)", fontSize: 13, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ fontWeight: 600, marginBottom: 2 }}>💡 Tips for best results</div>
-        <div style={{ opacity: 0.7 }}>1. In Archer's Toolbox, go to <strong>Score History</strong> and screenshot each page of the list — this gives dates + totals for all rounds</div>
-        <div style={{ opacity: 0.7 }}>2. Optionally open individual rounds and screenshot them for full end-by-end arrow detail</div>
-        <div style={{ opacity: 0.7 }}>3. Upload everything at once — Claude figures out which is which and stitches them together</div>
-      </div>
-
-      {/* Drop zone */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
@@ -529,12 +464,11 @@ function StepScreenshotUpload({ onProcess }) {
       >
         <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
           onChange={e => addFiles(e.target.files)} />
-
         {images.length === 0 ? (
           <>
             <div style={{ fontSize: 36, marginBottom: 8 }}>📱</div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>Drop screenshots here</div>
-            <div style={{ fontSize: 13, opacity: 0.5 }}>or tap to choose — select multiple at once</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{label}</div>
+            <div style={{ fontSize: 13, opacity: 0.5 }}>{hint}</div>
           </>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -543,21 +477,47 @@ function StepScreenshotUpload({ onProcess }) {
                 <img src={img.preview} alt={`Screenshot ${i+1}`}
                   style={{ height: 120, borderRadius: 8, objectFit: "cover", display: "block" }} />
                 <button onClick={e => { e.stopPropagation(); remove(i); }}
-                  style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  ×
-                </button>
+                  style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
               </div>
             ))}
             <div style={{ height: 120, width: 80, borderRadius: 8, border: "2px dashed var(--accent-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, opacity: 0.4, cursor: "pointer" }}>+</div>
           </div>
         )}
       </div>
+      {images.length > 0 && <div style={{ fontSize: 13, opacity: 0.5 }}>{images.length} screenshot{images.length !== 1 ? "s" : ""} ready</div>}
+    </div>
+  );
+}
 
-      {images.length > 0 && (
-        <div style={{ fontSize: 13, opacity: 0.5 }}>{images.length} screenshot{images.length !== 1 ? "s" : ""} ready</div>
-      )}
+// ── Step 1: History list upload ───────────────────────────────────────────────
+function StepScreenshotUpload({ onProcess }) {
+  const [images, setImages] = useState([]);
+  const [bowType, setBowType] = useState("");
 
-      {/* Bow type — optional fallback only */}
+  async function process() {
+    const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(img.file);
+    })));
+    onProcess(base64s, bowType);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Step 1 — Upload your score history</h2>
+        <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+          Screenshot the <strong>Scores list</strong> in Archer's Toolbox — scroll through and capture every page. This gives Claude dates and totals for all your rounds.
+        </p>
+      </div>
+      <div style={{ padding: 12, borderRadius: 10, background: "var(--accent-light)", fontSize: 13, lineHeight: 1.6 }}>
+        <strong>In Archer's Toolbox:</strong> Scores tab → scroll from top to bottom → screenshot each page of the list
+      </div>
+      <ImagePicker images={images} setImages={setImages}
+        label="Drop history screenshots here"
+        hint="Select all pages of your score list at once" />
       <div>
         <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 600 }}>
           Bow type fallback <span style={{ fontWeight: 400, opacity: 0.55 }}>(optional)</span>
@@ -566,18 +526,55 @@ function StepScreenshotUpload({ onProcess }) {
             <option value="">Auto-detect from screenshot</option>
             {BOW_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
-          <span style={{ fontWeight: 400, opacity: 0.5 }}>Bow type is read from each round automatically. Only set this if it's missing from your screenshots.</span>
+          <span style={{ fontWeight: 400, opacity: 0.5 }}>Only set if bow type isn't visible in your screenshots.</span>
         </label>
       </div>
-
       <button onClick={process} disabled={images.length === 0}
-        style={{
-          padding: "11px 22px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
-          border: "none", cursor: images.length === 0 ? "not-allowed" : "pointer",
-          fontWeight: 700, fontSize: 14, opacity: images.length === 0 ? 0.4 : 1, alignSelf: "flex-start",
-        }}>
+        style={{ padding: "11px 22px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: images.length === 0 ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 14, opacity: images.length === 0 ? 0.4 : 1, alignSelf: "flex-start" }}>
         Read with Claude →
       </button>
+    </div>
+  );
+}
+
+// ── Step 3b: Optional detail upload ──────────────────────────────────────────
+function StepDetailUpload({ scores, onProcess, onSkip }) {
+  const [images, setImages] = useState([]);
+
+  async function process() {
+    const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(img.file);
+    })));
+    onProcess(base64s);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 4px" }}>Step 2 — Add arrow detail <span style={{ fontWeight: 400, opacity: 0.5, fontSize: 14 }}>(optional)</span></h2>
+        <p style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+          For any rounds you want full end-by-end arrow data, open them individually in Archer's Toolbox and screenshot each one. Claude will match them to the rounds above by name and score.
+        </p>
+      </div>
+      <div style={{ padding: 10, borderRadius: 8, background: "var(--accent-light)", fontSize: 13 }}>
+        {scores.filter(s => !s._skip).length} rounds ready to import · add detail screens for any of them, or skip straight to import
+      </div>
+      <ImagePicker images={images} setImages={setImages}
+        label="Drop detail screen screenshots here"
+        hint="Open each round in the app → screenshot → upload here" />
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={process} disabled={images.length === 0}
+          style={{ padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: images.length === 0 ? "not-allowed" : "pointer", fontWeight: 600, fontSize: 14, opacity: images.length === 0 ? 0.4 : 1 }}>
+          Read detail screens →
+        </button>
+        <button onClick={onSkip}
+          style={{ padding: "10px 20px", borderRadius: 8, background: "transparent", border: "1px solid var(--accent-light)", cursor: "pointer", fontWeight: 500, fontSize: 14, color: "var(--foreground)" }}>
+          Skip — import totals only
+        </button>
+      </div>
     </div>
   );
 }
@@ -605,7 +602,7 @@ function guessArrows(round_name, arrowsArray) {
 }
 
 // ── Screenshot review ─────────────────────────────────────────────────────────
-function StepScreenshotReview({ scores, setScores, bowType, onNext, onReset }) {
+function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail, onReset }) {
   const activeScores   = scores.filter(s => !s._skip);
   const missingDates   = activeScores.filter(s => !s.date && !s._nodateok).length;
   const withDetail     = activeScores.filter(s => s.has_detail).length;
@@ -792,20 +789,21 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onReset }) {
       {activeScores.length === 0 ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 13, opacity: 0.6 }}>All rounds skipped — nothing to import.</span>
-          <button onClick={onReset}
-            style={{ padding: "8px 16px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
+          <button onClick={onReset} style={{ padding: "8px 16px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
             Start over
           </button>
         </div>
       ) : (
-        <button onClick={onNext} disabled={!canProceed}
-          style={{
-            padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)",
-            border: "none", cursor: canProceed ? "pointer" : "not-allowed",
-            fontWeight: 600, fontSize: 14, opacity: canProceed ? 1 : 0.4, alignSelf: "flex-start",
-          }}>
-          Preview {activeScores.length} score{activeScores.length !== 1 ? "s" : ""} →
-        </button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button onClick={onAddDetail}
+            style={{ padding: "10px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>
+            Add arrow detail →
+          </button>
+          <button onClick={onNext}
+            style={{ padding: "10px 20px", borderRadius: 8, background: "transparent", border: "1px solid var(--accent-light)", cursor: "pointer", fontWeight: 500, fontSize: 14, color: "var(--foreground)" }}>
+            Import {activeScores.length} totals only →
+          </button>
+        </div>
       )}
     </div>
   );
@@ -865,21 +863,54 @@ export default function ImportWizard({ userId, isOfficer, members }) {
     });
   }
 
-  // Screenshot: call edge function then go to review
-  async function handleScreenshotProcess(base64s, bowType) {
+  // Process images one at a time and merge — avoids payload limits
+  async function callEdgeFunction(base64s) {
+    const allScores = [];
+    const allErrors = [];
+    for (const img of base64s) {
+      const { data, error } = await supabase.functions.invoke("parse-screenshot-scores", {
+        body: { images: [img] },
+      });
+      if (error) { allErrors.push(error.message); continue; }
+      allScores.push(...(data.scores || []));
+      allErrors.push(...(data.errors || []));
+    }
+    return { scores: allScores, errors: allErrors };
+  }
+
+  // Step 1: process history list screenshots
+  async function handleHistoryProcess(base64s, bowType) {
     setSsBowType(bowType);
     setStep("ss_reading");
     setGlobalError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("parse-screenshot-scores", {
-        body: { images: base64s },
-      });
-      if (error) throw error;
-      setSsScores(data.scores || []);
+      const { scores, errors } = await callEdgeFunction(base64s);
+      if (!scores.length && errors.length) throw new Error(errors[0]);
+      setSsScores(scores);
       setStep("ss_review");
     } catch (e) {
       setGlobalError(e.message || "Failed to read screenshots");
-      setStep("ss_upload");
+      setStep("ss_history");
+    }
+  }
+
+  // Step 2: process detail screens and stitch arrows into existing scores
+  async function handleDetailProcess(base64s) {
+    setStep("ss_detail_reading");
+    setGlobalError(null);
+    try {
+      const { scores: detailScores } = await callEdgeFunction(base64s);
+      setSsScores(prev => prev.map(s => {
+        const match = detailScores.find(
+          d => d.round_name === s.round_name && parseInt(d.score) === parseInt(s.score) && d.arrows?.length > 0
+        );
+        if (!match) return s;
+        return { ...s, arrows: match.arrows, golds: match.golds ?? s.golds, has_detail: true };
+      }));
+      setStep("preview");
+    } catch (e) {
+      setGlobalError(e.message || "Failed to read detail screenshots");
+      setStep("ss_detail");
     }
   }
 
@@ -893,8 +924,8 @@ export default function ImportWizard({ userId, isOfficer, members }) {
           round_name:   s.round_name,
           score:        parseInt(s.score),
           golds:        s.golds != null ? parseInt(s.golds) : null,
-          shot_at:      s.date,
-          bow_type:     ssBowType || null,
+          shot_at:      s.date || null,
+          bow_type:     s.bow_type || ssBowType || null,
           age_category: null,
           classification: null,
           arrows_used:  s.arrows_used ?? guessArrows(s.round_name, s.arrows),
@@ -976,19 +1007,23 @@ export default function ImportWizard({ userId, isOfficer, members }) {
       {step === "mode" && (
         <StepModeSelect
           onCsv={() => { setSource("csv"); setStep("upload"); }}
-          onScreenshots={() => { setSource("screenshots"); setStep("ss_upload"); }}
+          onScreenshots={() => { setSource("screenshots"); setStep("ss_history"); }}
         />
       )}
 
       {/* ── Screenshot flow ── */}
-      {step === "ss_upload" && (
-        <StepScreenshotUpload onProcess={handleScreenshotProcess} />
+      {step === "ss_history" && (
+        <StepScreenshotUpload onProcess={handleHistoryProcess} />
       )}
-      {step === "ss_reading" && (
+      {(step === "ss_reading" || step === "ss_detail_reading") && (
         <div style={{ maxWidth: 520, margin: "0 auto", textAlign: "center", padding: "48px 0" }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🤖</div>
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Reading your screenshots…</div>
-          <div style={{ opacity: 0.5, fontSize: 14 }}>Claude is extracting scores and stitching detail views together</div>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>
+            {step === "ss_detail_reading" ? "Reading detail screens…" : "Reading your score history…"}
+          </div>
+          <div style={{ opacity: 0.5, fontSize: 14 }}>
+            {step === "ss_detail_reading" ? "Extracting arrow data and matching to your rounds" : "Claude is extracting dates, rounds and scores"}
+          </div>
           <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 6 }}>
             {[0.1,0.2,0.3].map(d => (
               <div key={d} style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", animation: `pulse 1.2s ease-in-out ${d}s infinite` }} />
@@ -1003,7 +1038,15 @@ export default function ImportWizard({ userId, isOfficer, members }) {
           setScores={setSsScores}
           bowType={ssBowType}
           onNext={() => setStep("preview")}
+          onAddDetail={() => setStep("ss_detail")}
           onReset={reset}
+        />
+      )}
+      {step === "ss_detail" && (
+        <StepDetailUpload
+          scores={ssScores}
+          onProcess={handleDetailProcess}
+          onSkip={() => setStep("preview")}
         />
       )}
 
