@@ -455,15 +455,42 @@ function StepScreenshotUpload({ onProcess }) {
     setImages(prev => prev.filter((_, idx) => idx !== i));
   }
 
+  async function tileImage(dataUrl) {
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        // Only tile if image is tall enough that text would be shrunk by the API
+        // Anthropic resizes to max 1568px longest side — tile if height > 2000
+        if (h <= 2000) { res([dataUrl]); return; }
+        const tileH = 1400;   // each tile height in px
+        const overlap = 200;  // overlap so cards on boundaries aren't cut
+        const tiles = [];
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        for (let y = 0; y < h; y += tileH - overlap) {
+          const sliceH = Math.min(tileH, h - y);
+          canvas.height = sliceH;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, y, w, sliceH, 0, 0, w, sliceH);
+          tiles.push(canvas.toDataURL("image/jpeg", 0.92));
+        }
+        res(tiles);
+      };
+      img.src = dataUrl;
+    });
+  }
+
   async function process() {
-    // Convert to base64
     const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
       const reader = new FileReader();
       reader.onload = e => res(e.target.result);
       reader.onerror = rej;
       reader.readAsDataURL(img.file);
     })));
-    onProcess(base64s, bowType);
+    // Tile tall images so Claude can read small text clearly
+    const tiled = (await Promise.all(base64s.map(tileImage))).flat();
+    onProcess(tiled, bowType);
   }
 
   return (
