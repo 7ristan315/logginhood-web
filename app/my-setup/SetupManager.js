@@ -312,10 +312,15 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
             <div style={{ fontSize: 12, opacity: 0.5 }}>{setup.bow_type}</div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {setup.is_active && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "var(--accent)", color: "var(--accent-foreground)", fontWeight: 600 }}>Active</span>}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <label title="Setup colour" style={{ position: "relative", cursor: "pointer" }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: setup.colour || "var(--accent)", border: "2px solid var(--border)" }} />
+            <input type="color" value={setup.colour || "#1a6bbf"} onChange={e => u("colour", e.target.value)}
+              style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }} />
+          </label>
+          {setup.is_active && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: setup.colour || "var(--accent)", color: "#fff", fontWeight: 600 }}>Active</span>}
           <label style={{ fontSize: 11, display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
-            <input type="checkbox" checked={setup.is_active ?? false} onChange={e => u("is_active", e.target.checked)} style={{ accentColor: "var(--accent)" }} />
+            <input type="checkbox" checked={setup.is_active ?? false} onChange={e => u("is_active", e.target.checked)} style={{ accentColor: setup.colour || "var(--accent)" }} />
             Active
           </label>
         </div>

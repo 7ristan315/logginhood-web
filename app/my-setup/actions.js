@@ -25,6 +25,7 @@ export async function saveSetup(setup) {
     release_aid: setup.release_aid || null,
     scope: setup.scope || null,
     stabilisers: setup.stabilisers || null,
+    colour: setup.colour || null,
     updated_at: new Date().toISOString(),
   };
 
