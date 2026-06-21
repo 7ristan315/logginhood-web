@@ -494,6 +494,29 @@ function StepScreenshotUpload({ onProcess }) {
   const [images, setImages] = useState([]);
   const [bowType, setBowType] = useState("");
 
+  function tileImage(dataUrl) {
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        if (h <= 1568) { res([dataUrl]); return; }
+        const tileH = 1500, overlap = 200;
+        const tiles = [];
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        for (let y = 0; y < h; y += tileH - overlap) {
+          const sliceH = Math.min(tileH, h - y);
+          canvas.height = sliceH;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, y, w, sliceH, 0, 0, w, sliceH);
+          tiles.push(canvas.toDataURL("image/jpeg", 0.92));
+        }
+        res(tiles);
+      };
+      img.src = dataUrl;
+    });
+  }
+
   async function process() {
     const base64s = await Promise.all(images.map(img => new Promise((res, rej) => {
       const reader = new FileReader();
@@ -501,7 +524,8 @@ function StepScreenshotUpload({ onProcess }) {
       reader.onerror = rej;
       reader.readAsDataURL(img.file);
     })));
-    onProcess(base64s, bowType);
+    const tiled = (await Promise.all(base64s.map(tileImage))).flat();
+    onProcess(tiled, bowType);
   }
 
   return (
