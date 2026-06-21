@@ -460,20 +460,23 @@ function StepScreenshotUpload({ onProcess }) {
       const img = new Image();
       img.onload = () => {
         const { naturalWidth: w, naturalHeight: h } = img;
-        // Only tile if image is tall enough that text would be shrunk by the API
-        // Anthropic resizes to max 1568px longest side — tile if height > 2000
         if (h <= 2000) { res([dataUrl]); return; }
-        const tileH = 1400;   // each tile height in px
-        const overlap = 200;  // overlap so cards on boundaries aren't cut
+        // Tile into sections; scale output to max 800px wide so payload stays small
+        // but text is still fully legible for Claude
+        const maxOutW = 800;
+        const scale   = maxOutW / w;
+        const tileH   = Math.round(1400 / scale); // source pixels per tile
+        const overlap  = Math.round(200  / scale); // source pixels overlap
+        const outH     = Math.round(tileH * scale);
         const tiles = [];
         const canvas = document.createElement("canvas");
-        canvas.width = w;
+        canvas.width  = maxOutW;
         for (let y = 0; y < h; y += tileH - overlap) {
           const sliceH = Math.min(tileH, h - y);
-          canvas.height = sliceH;
+          canvas.height = Math.round(sliceH * scale);
           const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, y, w, sliceH, 0, 0, w, sliceH);
-          tiles.push(canvas.toDataURL("image/jpeg", 0.92));
+          ctx.drawImage(img, 0, y, w, sliceH, 0, 0, maxOutW, Math.round(sliceH * scale));
+          tiles.push(canvas.toDataURL("image/jpeg", 0.85));
         }
         res(tiles);
       };
