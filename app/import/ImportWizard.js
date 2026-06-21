@@ -947,10 +947,17 @@ export default function ImportWizard({ userId, isOfficer, members }) {
       const rows = getReadyRows();
       const res = await importRows(rows);
       if (res.error) { setGlobalError(res.error); setLoading(false); return; }
+      if (res.imported === 0 && res.errors?.length > 0) {
+        setGlobalError(`Import failed: ${res.errors.join("; ")}`);
+        setStep(source === "screenshots" ? "ss_review" : "preview");
+        setLoading(false);
+        return;
+      }
       setResult(res);
       setStep("done");
     } catch (e) {
       setGlobalError(e.message || "Import failed");
+      if (source === "screenshots") setStep("ss_review");
     }
     setLoading(false);
   }

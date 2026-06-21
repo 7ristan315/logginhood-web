@@ -72,18 +72,19 @@ export async function importRows(rows) {
     const score = parseInt(row.score);
     if (isNaN(score)) { errors.push(`Bad score: "${row.score}"`); continue; }
     if (!row.round_name?.trim()) { errors.push("Missing round name"); continue; }
-    valid.push({
+    const entry = {
       profile_id: row.profile_id,
       round_name: row.round_name.trim(),
       score,
       golds: row.golds ? (parseInt(row.golds) || null) : null,
-      shot_at,
       bow_type: normaliseBow(row.bow_type),
       age_category: row.age_category?.trim() || null,
       classification: row.classification?.trim() || null,
       arrows_used: row.arrows_used ? (parseInt(row.arrows_used) || null) : null,
       status: "submitted",
-    });
+    };
+    if (shot_at) entry.shot_at = shot_at;
+    valid.push(entry);
   }
 
   if (!valid.length) return { imported: 0, skipped: 0, errors };
