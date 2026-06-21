@@ -2,9 +2,24 @@
 
 import { useState } from "react";
 import { saveSetup, deleteSetup, saveSightMarks, saveCrawlMarks, saveArrowSet, deleteArrowSet } from "./actions";
+import { ROUNDS } from "@/lib/rounds";
 
 const BOW_TYPES = ["Recurve", "Compound", "Barebow", "Longbow"];
 const BOW_ICON = { Recurve: "🏹", Compound: "⚙️", Barebow: "🎯", Longbow: "🌲" };
+
+// Extract individual distances from a round's distance string (e.g. "100/80/60 yd" → ["100 yd","80 yd","60 yd"])
+function roundDistances(roundName) {
+  const r = ROUNDS[roundName];
+  if (!r) return [];
+  const parts = r.distance.split("/").map(s => s.trim());
+  const unit = parts[parts.length - 1].replace(/^[\d.]+\s*/, "");
+  return parts.map(p => {
+    const num = p.replace(/[^\d.]/g, "");
+    return `${num} ${unit}`;
+  });
+}
+
+const ROUND_NAMES = Object.keys(ROUNDS).sort();
 
 // What equipment each bow type supports
 const EQUIP = {
@@ -57,11 +72,27 @@ function Section({ title, children, defaultOpen = true }) {
 
 // ── Sight Marks Editor ──
 function SightMarksEditor({ marks, setMarks }) {
+  const [roundPick, setRoundPick] = useState("");
+
   function update(i, field, val) {
     setMarks(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: val } : m));
   }
   function addRow() { setMarks(prev => [...prev, { distance: "", sight_number: null, extension_bar: null, notes: "" }]); }
   function removeRow(i) { setMarks(prev => prev.filter((_, idx) => idx !== i)); }
+
+  function addFromRound() {
+    if (!roundPick) return;
+    const distances = roundDistances(roundPick);
+    setMarks(prev => {
+      const existing = new Set(prev.map(m => m.distance));
+      const newRows = distances.filter(d => !existing.has(d)).map(d => {
+        const similar = prev.find(m => m.distance === d);
+        return { distance: d, sight_number: similar?.sight_number ?? null, extension_bar: similar?.extension_bar ?? null, notes: "" };
+      });
+      return [...prev, ...newRows];
+    });
+    setRoundPick("");
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -74,20 +105,52 @@ function SightMarksEditor({ marks, setMarks }) {
           <button onClick={() => removeRow(i)} style={{ fontSize: 12, padding: "4px 8px", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: "#dc2626", marginBottom: 2 }}>×</button>
         </div>
       ))}
-      <button onClick={addRow} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1px dashed var(--border)", background: "transparent", cursor: "pointer", color: "var(--foreground)", alignSelf: "flex-start" }}>
-        + Add distance
-      </button>
+      <div style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>
+        <button onClick={addRow} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1px dashed var(--border)", background: "transparent", cursor: "pointer", color: "var(--foreground)" }}>
+          + Add distance
+        </button>
+        <div style={{ display: "flex", gap: 4, alignItems: "end" }}>
+          <select value={roundPick} onChange={e => setRoundPick(e.target.value)}
+            style={{ fontSize: 12, padding: "4px 6px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" }}>
+            <option value="">Add from round…</option>
+            {ROUND_NAMES.map(r => <option key={r} value={r}>{r} — {ROUNDS[r].distance}</option>)}
+          </select>
+          {roundPick && <button onClick={addFromRound} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600 }}>Add</button>}
+        </div>
+      </div>
     </div>
   );
 }
 
 // ── Crawl Marks Editor ──
 function CrawlMarksEditor({ marks, setMarks }) {
+  const [roundPick, setRoundPick] = useState("");
+
   function update(i, field, val) {
     setMarks(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: val } : m));
   }
   function addRow() { setMarks(prev => [...prev, { distance: "", finger_position: "3 under", anchor: "chin", tab_count: null, notes: "" }]); }
   function removeRow(i) { setMarks(prev => prev.filter((_, idx) => idx !== i)); }
+
+  function addFromRound() {
+    if (!roundPick) return;
+    const distances = roundDistances(roundPick);
+    setMarks(prev => {
+      const existing = new Set(prev.map(m => m.distance));
+      const newRows = distances.filter(d => !existing.has(d)).map(d => {
+        const similar = prev.find(m => m.distance === d);
+        return {
+          distance: d,
+          finger_position: similar?.finger_position ?? "3 under",
+          anchor: similar?.anchor ?? "chin",
+          tab_count: similar?.tab_count ?? null,
+          notes: "",
+        };
+      });
+      return [...prev, ...newRows];
+    });
+    setRoundPick("");
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -101,9 +164,19 @@ function CrawlMarksEditor({ marks, setMarks }) {
           <button onClick={() => removeRow(i)} style={{ fontSize: 12, padding: "4px 8px", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: "#dc2626", marginBottom: 2 }}>×</button>
         </div>
       ))}
-      <button onClick={addRow} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1px dashed var(--border)", background: "transparent", cursor: "pointer", color: "var(--foreground)", alignSelf: "flex-start" }}>
-        + Add distance
-      </button>
+      <div style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>
+        <button onClick={addRow} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1px dashed var(--border)", background: "transparent", cursor: "pointer", color: "var(--foreground)" }}>
+          + Add distance
+        </button>
+        <div style={{ display: "flex", gap: 4, alignItems: "end" }}>
+          <select value={roundPick} onChange={e => setRoundPick(e.target.value)}
+            style={{ fontSize: 12, padding: "4px 6px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" }}>
+            <option value="">Add from round…</option>
+            {ROUND_NAMES.map(r => <option key={r} value={r}>{r} — {ROUNDS[r].distance}</option>)}
+          </select>
+          {roundPick && <button onClick={addFromRound} style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600 }}>Add</button>}
+        </div>
+      </div>
     </div>
   );
 }
