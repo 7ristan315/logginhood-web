@@ -35,9 +35,10 @@ function normaliseBow(s) {
 
 // rows: [{profile_id, round_name, score, golds, shot_at, bow_type, age_category, classification, arrows_used}]
 export async function importRows(rows) {
+  try {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return { imported: 0, skipped: 0, errors: ["Not logged in"] };
 
   // Verify permissions — user can only import for themselves unless they're an officer
   const uniqueProfiles = [...new Set(rows.map(r => r.profile_id))];
@@ -117,4 +118,7 @@ export async function importRows(rows) {
   revalidatePath("/dashboard");
   revalidatePath("/history");
   return { imported, skipped, errors };
+  } catch (e) {
+    return { imported: 0, skipped: 0, errors: [e.message || "Unexpected error"] };
+  }
 }
