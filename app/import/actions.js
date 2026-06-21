@@ -105,8 +105,13 @@ export async function importRows(rows) {
 
   let imported = 0;
   for (let i = 0; i < toInsert.length; i += 100) {
-    const { error } = await supabase.from("scores").insert(toInsert.slice(i, i + 100));
-    if (!error) imported += Math.min(100, toInsert.length - i);
+    const batch = toInsert.slice(i, i + 100);
+    const { error } = await supabase.from("scores").insert(batch);
+    if (error) {
+      errors.push(`DB: ${error.message} (batch ${Math.floor(i/100)+1})`);
+    } else {
+      imported += batch.length;
+    }
   }
 
   revalidatePath("/dashboard");
