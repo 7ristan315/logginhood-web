@@ -74,7 +74,6 @@ export async function importRows(rows) {
     if (!row.round_name?.trim()) { errors.push("Missing round name"); continue; }
     valid.push({
       profile_id: row.profile_id,
-      user_id: row.profile_id,
       round_name: row.round_name.trim(),
       score,
       golds: row.golds ? (parseInt(row.golds) || null) : null,
