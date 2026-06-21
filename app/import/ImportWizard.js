@@ -767,7 +767,7 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail,
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "var(--accent-light)" }}>
-              {["Round","Date","Score","Golds","Arrows",""].map(h => (
+              {["Round","Date","Bow","Score","Golds","Arrows",""].map(h => (
                 <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 600, opacity: 0.6, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
@@ -784,9 +784,12 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail,
                   <td style={{ padding: "6px 10px" }}>
                     {!skipped && s.round_name && !KNOWN_ROUNDS.has(s.round_name) ? (
                       <select value={s.round_name} onChange={e => updateRow(i, "round_name", e.target.value)}
-                        style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "2px solid #f59e0b", background: "rgba(245,158,11,0.08)", color: "var(--foreground)", width: 140 }}>
+                        style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "2px solid #f59e0b", background: "rgba(245,158,11,0.08)", color: "var(--foreground)", width: 200 }}>
                         <option value={s.round_name}>⚠ {s.round_name}</option>
-                        {ROUND_NAMES_SORTED.map(r => <option key={r} value={r}>{r}</option>)}
+                        {ROUND_NAMES_SORTED.map(r => {
+                          const rd = ROUNDS[r];
+                          return <option key={r} value={r}>{r} — {rd.distance} · {rd.ends * rd.arrowsPerEnd} arrows</option>;
+                        })}
                       </select>
                     ) : (
                       <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
@@ -799,6 +802,7 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail,
                       disabled={skipped}
                       style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: `1px solid ${!skipped && !s.date ? "#f59e0b" : "var(--accent-light)"}`, background: "var(--background)", color: "var(--foreground)" }} />
                   </td>
+                  <td style={{ padding: "6px 10px", fontSize: 12, opacity: 0.7 }}>{s.bow_type ?? "—"}</td>
                   <td style={{ padding: "6px 10px", fontWeight: 700, color: skipped ? "inherit" : "var(--accent)" }}>{s.score}</td>
                   <td style={{ padding: "6px 10px", opacity: 0.6 }}>{s.golds ?? "—"}</td>
                   <td style={{ padding: "6px 10px" }}>
