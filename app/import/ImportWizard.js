@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { importRows } from "./actions";
+import { ROUNDS } from "@/lib/rounds";
 
 const FIELD_OPTIONS = [
   { value: "shot_at",        label: "Date shot" },
@@ -625,10 +626,14 @@ function guessArrows(round_name, arrowsArray) {
   return ROUND_ARROWS[round_name] ?? null;
 }
 
+const KNOWN_ROUNDS = new Set(Object.keys(ROUNDS));
+const ROUND_NAMES_SORTED = Object.keys(ROUNDS).sort();
+
 // ── Screenshot review ─────────────────────────────────────────────────────────
 function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail, onReset }) {
   const activeScores   = scores.filter(s => !s._skip);
   const missingDates   = activeScores.filter(s => !s.date && !s._nodateok).length;
+  const unknownRounds  = activeScores.filter(s => s.round_name && !KNOWN_ROUNDS.has(s.round_name));
   const withDetail     = activeScores.filter(s => s.has_detail).length;
   const totalsOnly     = activeScores.length - withDetail;
   const [bulkDate,     setBulkDate]     = useState("");
@@ -665,6 +670,13 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail,
           {missingDates > 0 ? ` · ${missingDates} dates missing` : " · all dates set ✓"}
         </p>
       </div>
+
+      {/* Unknown round names warning */}
+      {unknownRounds.length > 0 && (
+        <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fef3c7", border: "1px solid #f59e0b", fontSize: 13, lineHeight: 1.5 }}>
+          <strong>{unknownRounds.length} round{unknownRounds.length !== 1 ? "s" : ""} not recognised</strong> — highlighted in the table below. Use the dropdown to correct them or leave as-is to import with the AI's best guess.
+        </div>
+      )}
 
       {/* Totals-only notice — shown once, not per row */}
       {totalsOnly > 0 && (
@@ -776,9 +788,17 @@ function StepScreenshotReview({ scores, setScores, bowType, onNext, onAddDetail,
                   background: !skipped && !s.date ? "rgba(245,158,11,0.05)" : "transparent",
                 }}>
                   <td style={{ padding: "6px 10px" }}>
-                    <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
-                      disabled={skipped}
-                      style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 120 }} />
+                    {!skipped && s.round_name && !KNOWN_ROUNDS.has(s.round_name) ? (
+                      <select value={s.round_name} onChange={e => updateRow(i, "round_name", e.target.value)}
+                        style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "2px solid #f59e0b", background: "rgba(245,158,11,0.08)", color: "var(--foreground)", width: 140 }}>
+                        <option value={s.round_name}>⚠ {s.round_name}</option>
+                        {ROUND_NAMES_SORTED.map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    ) : (
+                      <input value={s.round_name || ""} onChange={e => updateRow(i, "round_name", e.target.value)}
+                        disabled={skipped}
+                        style={{ fontSize: 13, padding: "3px 6px", borderRadius: 5, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)", width: 120 }} />
+                    )}
                   </td>
                   <td style={{ padding: "6px 10px" }}>
                     <input type="date" value={s.date || ""} onChange={e => updateRow(i, "date", e.target.value)}
