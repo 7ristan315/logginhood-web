@@ -130,6 +130,10 @@ export default function SidebarNav({ messages, user, profile }) {
             <span className="sidebar-item-label">Admin</span>
           </Link>
         )}
+        <Link href="/my-setup" className={`sidebar-item ${isActive("/my-setup") ? "active" : ""}`}>
+          <span className="sidebar-item-icon">🏹</span>
+          <span className="sidebar-item-label">My Setup</span>
+        </Link>
         <Link href="/import" className={`sidebar-item ${isActive("/import") ? "active" : ""}`}>
           <span className="sidebar-item-icon">⬆</span>
           <span className="sidebar-item-label">Import scores</span>
