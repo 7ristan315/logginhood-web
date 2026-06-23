@@ -100,9 +100,9 @@ export default function FeaturesPage() {
           description="The phone screen won't sleep mid-round. Logginhood uses the Wake Lock API to keep the display active while you're scoring."
         />
         <Feature
-          badge={<AppBadge />}
-          title="Sight notes"
-          description="Store your sight marks per distance directly on the round setup screen. Available to glance at any time during scoring."
+          badge={<BothBadge />}
+          title="Sight &amp; crawl marks"
+          description="Store sight marks (recurve/compound) or crawl marks (barebow/longbow) per distance. Set them on the website or inline while scoring — they sync across both."
         />
       </Section>
 
@@ -110,8 +110,8 @@ export default function FeaturesPage() {
       <Section title="Rounds">
         <Feature
           badge={<BothBadge />}
-          title="Full round library"
-          description="Every standard WA indoor and outdoor round built in — Portsmouth, WA 18m, Vegas, York, Hereford, Bristol I–V, St George, Windsor, Long Metric, Short Metric, WA 70m and more."
+          title="90+ AGB rounds"
+          description="Every standard Archery GB round built in — indoor (Portsmouth, WA 18m, Vegas, Worcester, Stafford, Bray, Frostbite) and outdoor (York, Hereford, Bristol I–V, all Windsor/Western/National/Warwick variants, Long &amp; Short Metric, WA 1440, Metric I–V, and more)."
         />
         <Feature
           badge={<AppBadge />}
@@ -138,19 +138,24 @@ export default function FeaturesPage() {
           description="Name, Archery GB number, date of birth, gender, age category (U12 through 60+), and club. Synced across the app and Quiver."
         />
         <Feature
-          badge={<AppBadge />}
-          title="Bow types"
-          description="Recurve, Compound, Barebow, and Longbow built in. Add a custom bow type if yours doesn't fit a standard category."
+          badge={<BothBadge />}
+          title="My Setup — equipment hub"
+          description="Create full bow setups with riser, limbs, draw weight, sight, button, clicker, tab, sling, stabilisers, and arrows. The UI adapts to your bow type — barebow shows crawl marks, compound shows release aid and scope."
         />
         <Feature
-          badge={<AppBadge />}
-          title="Per-bow colour themes"
-          description="Set a custom accent colour for each bow. When you switch bow the whole app recolours — handy if you shoot multiple disciplines."
+          badge={<BothBadge />}
+          title="Bow types &amp; per-setup colours"
+          description="Recurve, Compound, Barebow, and Longbow. Each setup has its own accent colour — the app themes itself automatically when you score with that bow."
         />
         <Feature
-          badge={<AppBadge />}
+          badge={<BothBadge />}
           title="Arrow sets"
-          description="Name and manage your arrow sets (e.g. Easton X10, ACE 620). Star a default and it's auto-selected when you set up a round."
+          description="Multiple arrow sets per bow setup with spine, length, point weight, fletching, nock, and clicker offset. Star an active set that auto-selects when scoring."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="Stabiliser setup"
+          description="Track your full rod configuration — long rod, short rods, V-bar angle, dampers, and riser weights. All tied to the bow setup so nothing gets lost."
         />
         <Feature
           badge={<AppBadge />}
@@ -208,6 +213,35 @@ export default function FeaturesPage() {
         />
       </Section>
 
+      {/* Import */}
+      <Section title="Score Import">
+        <Feature
+          badge={<WebBadge />}
+          title="Screenshot import (AI)"
+          description="Screenshot your score history in Archer's Toolbox or any app. Claude reads the images, extracts round names, dates, scores, and bow types automatically."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="Two-tier import flow"
+          description="Upload your history list first to get dates and totals. Then optionally add detail screen screenshots for full end-by-end arrow data — Claude matches them by round and score."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="Round name correction"
+          description="If the AI misreads a round name, a dropdown flags it and suggests the correct round from the full AGB list with distances and arrow counts."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="CSV import"
+          description="Upload a CSV export from any archery app. Claude maps the columns automatically — review and correct before importing."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="Bulk import for clubs"
+          description="Records keepers and chairmen can import scores for multiple club members at once, matching archer names to member profiles."
+        />
+      </Section>
+
       {/* Club features — Quiver */}
       <Section title="Club features — Quiver">
         <Feature
@@ -239,6 +273,16 @@ export default function FeaturesPage() {
           badge={<WebBadge />}
           title="Club verification"
           description="Clubs go through a verification process — verified clubs are badged so archers know they're legitimate."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="Classification audit"
+          description="Records keepers can review and correct member classifications. Audit scores against AGB thresholds, flag discrepancies, and bulk-update with one click."
+        />
+        <Feature
+          badge={<WebBadge />}
+          title="AGB threshold editor"
+          description="Update classification thresholds when AGB publishes new ones. Changes apply from an effective date — historical scores aren't reclassified unless you choose to."
         />
       </Section>
 
