@@ -47,7 +47,7 @@ export default function EquipmentPicker({ category, value, onChange, placeholder
   }
 
   const inputStyle = { fontSize: 13, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)", width: "100%" };
-  const dropStyle = { position: "absolute", top: "100%", left: 0, right: 0, maxHeight: 280, overflowY: "auto", background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, zIndex: 10, marginTop: 2, boxShadow: "0 8px 24px rgba(0,0,0,0.3)" };
+  const dropStyle = { position: "absolute", top: "100%", left: 0, right: 0, maxHeight: 400, overflowY: "auto", background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, zIndex: 10, marginTop: 2, boxShadow: "0 8px 24px rgba(0,0,0,0.3)" };
   const itemStyle = { padding: "8px 12px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid var(--border)", transition: "background 0.1s" };
 
   return (
