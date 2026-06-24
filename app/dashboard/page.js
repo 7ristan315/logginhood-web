@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
+import ClassificationTracker from "./ClassificationTracker";
 
 const LBL = ["IA3","IA2","IA1","IB3","IB2","IB1","IMB","IGMB"];
 
@@ -13,15 +14,19 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, bow_type")
+    .select("full_name, bow_type, age_category, gender")
     .eq("id", user.id)
     .single();
 
   const { data: rawScores } = await supabase
     .from("scores")
-    .select("id, round_name, score, golds, shot_at, bow_type, age_category, classification")
+    .select("id, round_name, score, golds, shot_at, bow_type, age_category, classification, status, arrows_used")
     .eq("profile_id", user.id)
     .order("shot_at", { ascending: false });
+
+  const { data: clsThresholds } = await supabase
+    .from("classification_thresholds")
+    .select("bow_type, age_category, gender, round_name, thresholds");
 
   const scores = rawScores || [];
 
@@ -126,14 +131,23 @@ export default async function DashboardPage() {
           <p style={{ fontSize: 14 }}>Open the app and shoot your first round to see your stats here.</p>
         </div>
       ) : (
-        <DashboardClient
-          stats={stats}
-          recentScores={recentWithDiff}
-          personalBests={personalBests}
-          byBow={byBow}
-          sparklineData={sparklineData}
-          sparklineRound={sparklineRound}
-        />
+        <>
+          <DashboardClient
+            stats={stats}
+            recentScores={recentWithDiff}
+            personalBests={personalBests}
+            byBow={byBow}
+            sparklineData={sparklineData}
+            sparklineRound={sparklineRound}
+          />
+          <div style={{ marginTop: "2rem" }}>
+            <ClassificationTracker
+              scores={scores}
+              thresholds={clsThresholds || []}
+              profile={profile}
+            />
+          </div>
+        </>
       )}
     </div>
   );
