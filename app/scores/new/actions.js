@@ -46,6 +46,17 @@ export async function addScore(formData) {
     .single();
 
   const clubId = formData.get("club_id") || null;
+  const bowType = formData.get("bow_type") || profile?.bow_type || null;
+
+  // Find active setup for this bow type to link the score
+  const { data: activeSetup } = bowType ? await supabase
+    .from("bow_setups")
+    .select("id")
+    .eq("profile_id", user.id)
+    .eq("bow_type", bowType)
+    .eq("is_active", true)
+    .limit(1)
+    .single() : { data: null };
 
   await supabase.from("scores").insert({
     profile_id: user.id,
@@ -55,8 +66,9 @@ export async function addScore(formData) {
     golds,
     shot_at: shotAt,
     status,
-    bow_type: formData.get("bow_type") || profile?.bow_type || null,
+    bow_type: bowType,
     age_category: ageCategory,
+    setup_id: activeSetup?.id || null,
   });
 
   revalidatePath("/dashboard");

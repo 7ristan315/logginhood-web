@@ -31,8 +31,20 @@ export async function saveSetup(setup) {
 
   let result;
   if (setup.id) {
+    // Archive current version before overwriting
+    const { data: current } = await supabase.from("bow_setups").select("*").eq("id", setup.id).single();
+    if (current) {
+      const { id: _id, profile_id: _pid, created_at: _ca, ...snapshot } = current;
+      await supabase.from("bow_setup_history").insert({
+        setup_id: setup.id,
+        version: current.version || 1,
+        snapshot,
+      });
+      row.version = (current.version || 1) + 1;
+    }
     result = await supabase.from("bow_setups").update(row).eq("id", setup.id).eq("profile_id", user.id).select().single();
   } else {
+    row.version = 1;
     result = await supabase.from("bow_setups").insert(row).select().single();
   }
 
