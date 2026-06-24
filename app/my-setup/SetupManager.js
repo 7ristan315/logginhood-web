@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { saveSetup, deleteSetup, saveSightMarks, saveCrawlMarks, saveArrowSet, deleteArrowSet } from "./actions";
 import { ROUNDS } from "@/lib/rounds";
+import EquipmentPicker from "./EquipmentPicker";
 
 const BOW_TYPES = ["Recurve", "Compound", "Barebow", "Longbow"];
 const BOW_ICON = { Recurve: "🏹", Compound: "⚙️", Barebow: "🎯", Longbow: "🌲" };
@@ -327,22 +328,31 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
       </div>
 
       <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* Bow details */}
-        <Section title="Bow">
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Field label="Riser" value={setup.riser} onChange={v => u("riser", v)} placeholder="Hoyt Formula Xi" width={160} />
-            <Field label="Limbs" value={setup.limbs} onChange={v => u("limbs", v)} placeholder="Win & Win Wiawis" width={160} />
-            <Field label="Draw weight" value={setup.draw_weight} onChange={v => u("draw_weight", v)} placeholder="38 lbs" width={90} />
+        {/* Riser */}
+        <Section title="Riser">
+          <EquipmentPicker category="riser" value={setup.riser_equip || {}} onChange={v => u("riser_equip", v)} placeholder="Hoyt" />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+            <Field label='Length (")' value={setup.riser_length} onChange={v => u("riser_length", v)} placeholder='25"' width={70} />
+            <Select label="Bow type" value={setup.bow_type} onChange={v => u("bow_type", v)} options={BOW_TYPES} />
             <Field label="Draw length" value={setup.draw_length} onChange={v => u("draw_length", v)} placeholder='28"' width={70} />
           </div>
-          <Select label="Bow type" value={setup.bow_type} onChange={v => u("bow_type", v)} options={BOW_TYPES} />
+        </Section>
+
+        {/* Limbs */}
+        <Section title="Limbs" defaultOpen={false}>
+          <EquipmentPicker category="limbs" value={setup.limbs_equip || {}} onChange={v => u("limbs_equip", v)} placeholder="Win&Win" />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+            <Select label="Material" value={setup.limbs_material} onChange={v => u("limbs_material", v)} options={["Carbon", "Carbon/Foam", "Carbon/Wood", "Wood", "Fibreglass", "Bamboo"]} placeholder="Select..." />
+            <Field label='Length (")' value={setup.limbs_length} onChange={v => u("limbs_length", v)} placeholder='68"' width={70} />
+            <Field label="Draw weight" value={setup.draw_weight} onChange={v => u("draw_weight", v)} placeholder="38 lbs" width={90} />
+          </div>
         </Section>
 
         {/* Sight (Recurve, Compound) */}
         {eq.sight && (
           <Section title="Sight" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Field label="Sight name" value={setup.sight?.name} onChange={v => uJson("sight", "name", v)} placeholder="Shibuya Ultima RC II" width={180} />
+            <EquipmentPicker category="sight" value={setup.sight || {}} onChange={v => u("sight", { ...(setup.sight || {}), ...v })} placeholder="Shibuya" />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <Field label="Pin" value={setup.sight?.pin} onChange={v => uJson("sight", "pin", v)} placeholder="Fibre .019" width={120} />
             </div>
             <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600, opacity: 0.7 }}>Sight marks</div>
@@ -370,10 +380,11 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
         {/* Button / Plunger */}
         {eq.button && (
           <Section title="Button / Plunger" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Field label="Name" value={setup.button?.name} onChange={v => uJson("button", "name", v)} placeholder="Beiter" width={120} />
+            <EquipmentPicker category="button" value={setup.button || {}} onChange={v => u("button", { ...(setup.button || {}), ...v })} placeholder="Beiter" />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
               <Field label="Spring" value={setup.button?.spring} onChange={v => uJson("button", "spring", v)} placeholder="Medium, 3 clicks" width={130} />
               <Field label="Position" value={setup.button?.position} onChange={v => uJson("button", "position", v)} placeholder="4.5 turns" width={100} />
+              <Field label="Tip type" value={setup.button?.tip_type} onChange={v => uJson("button", "tip_type", v)} placeholder="Standard" width={100} />
             </div>
           </Section>
         )}
@@ -381,19 +392,36 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
         {/* Clicker */}
         {eq.clicker && (
           <Section title="Clicker" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8 }}>
+            <EquipmentPicker category="clicker" value={setup.clicker || {}} onChange={v => u("clicker", { ...(setup.clicker || {}), ...v })} placeholder="Shibuya" />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <Select label="Type" value={setup.clicker?.type} onChange={v => uJson("clicker", "type", v)} options={["Blade", "Magnetic"]} />
               <Field label="Position (mm)" value={setup.clicker?.position} onChange={v => uJson("clicker", "position", v)} width={80} />
             </div>
           </Section>
         )}
 
+        {/* Arrow rest */}
+        <Section title="Arrow Rest" defaultOpen={false}>
+          <EquipmentPicker category="arrow_rest" value={setup.arrow_rest || {}} onChange={v => u("arrow_rest", { ...(setup.arrow_rest || {}), ...v })} placeholder="Shibuya" />
+        </Section>
+
         {/* Release aid (Compound) */}
         {eq.release_aid && (
           <Section title="Release Aid" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Select label="Type" value={setup.release_aid?.type} onChange={v => uJson("release_aid", "type", v)} options={["Thumb", "Hinge", "Tension"]} />
-              <Field label="Name" value={setup.release_aid?.name} onChange={v => uJson("release_aid", "name", v)} placeholder="Carter Evo" width={140} />
+            <EquipmentPicker category="release_aid" value={setup.release_aid || {}} onChange={v => u("release_aid", { ...(setup.release_aid || {}), ...v })} placeholder="Carter" />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <Select label="Type" value={setup.release_aid?.type} onChange={v => uJson("release_aid", "type", v)} options={["Thumb", "Hinge", "Tension", "Wrist"]} />
+            </div>
+          </Section>
+        )}
+
+        {/* Scope (Compound) */}
+        {eq.scope && (
+          <Section title="Scope / Lens" defaultOpen={false}>
+            <EquipmentPicker category="scope" value={setup.scope || {}} onChange={v => u("scope", { ...(setup.scope || {}), ...v })} placeholder="Axcel" />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <Field label="Magnification" value={setup.scope?.magnification} onChange={v => uJson("scope", "magnification", v)} placeholder="4x" width={80} />
+              <Field label="Housing size" value={setup.scope?.housing_size} onChange={v => uJson("scope", "housing_size", v)} placeholder="29mm" width={80} />
             </div>
           </Section>
         )}
@@ -401,8 +429,8 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
         {/* Tab (Recurve, Barebow, Longbow) */}
         {eq.tab && (
           <Section title="Tab" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Field label="Name" value={setup.tab?.name} onChange={v => uJson("tab", "name", v)} placeholder="AAE Elite" width={120} />
+            <EquipmentPicker category="tab" value={setup.tab || {}} onChange={v => u("tab", { ...(setup.tab || {}), ...v })} placeholder="AAE" />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
               <Field label="Size" value={setup.tab?.size} onChange={v => uJson("tab", "size", v)} placeholder="L" width={50} />
               <Select label="Finger spacer" value={setup.tab?.finger_spacer} onChange={v => uJson("tab", "finger_spacer", v)} options={["Yes", "No"]} />
               <Field label="Plate material" value={setup.tab?.plate_material} onChange={v => uJson("tab", "plate_material", v)} placeholder="Cordovan" width={100} />
@@ -413,25 +441,63 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
         {/* Sling */}
         {eq.sling && (
           <Section title="Sling" defaultOpen={false}>
-            <div style={{ display: "flex", gap: 8 }}>
+            <EquipmentPicker category="sling" value={setup.sling || {}} onChange={v => u("sling", { ...(setup.sling || {}), ...v })} placeholder="Beiter" />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <Select label="Type" value={setup.sling?.type} onChange={v => uJson("sling", "type", v)} options={["Finger sling", "Bow sling"]} />
-              <Field label="Name" value={setup.sling?.name} onChange={v => uJson("sling", "name", v)} placeholder="" width={120} />
             </div>
           </Section>
         )}
 
+        {/* String */}
+        <Section title="String" defaultOpen={false}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Field label="Material" value={setup.string?.material} onChange={v => u("string", { ...(setup.string || {}), material: v })} placeholder="BCY 8125" width={120} />
+            <Field label="Strand count" value={setup.string?.strands} onChange={v => u("string", { ...(setup.string || {}), strands: v })} placeholder="18" width={70} />
+            <Field label="String maker" value={setup.string?.maker} onChange={v => u("string", { ...(setup.string || {}), maker: v })} placeholder="" width={120} />
+          </div>
+        </Section>
+
         {/* Stabilisers (Recurve, Compound) */}
         {eq.stabilisers && (
           <Section title="Stabilisers" defaultOpen={false}>
-            <StabiliserEditor value={setup.stabilisers} onChange={v => u("stabilisers", v)} />
+            <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.5, marginBottom: 4 }}>Long rod</div>
+            <EquipmentPicker category="stabiliser" value={setup.stabilisers?.long_rod_equip || {}} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), long_rod_equip: v })} placeholder="Doinker" />
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <Field label='Length (")' value={setup.stabilisers?.long_rod?.length} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), long_rod: { ...(setup.stabilisers?.long_rod || {}), length: v } })} width={70} />
+              <Field label="Tip weight (oz)" value={setup.stabilisers?.long_rod?.weight} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), long_rod: { ...(setup.stabilisers?.long_rod || {}), weight: v } })} width={90} />
+              <Select label="Damper" value={setup.stabilisers?.long_rod?.damper} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), long_rod: { ...(setup.stabilisers?.long_rod || {}), damper: v } })} options={["Yes", "No"]} />
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.5, marginTop: 12, marginBottom: 4 }}>Side rods</div>
+            <EquipmentPicker category="stabiliser" value={setup.stabilisers?.side_rod_equip || {}} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), side_rod_equip: v })} placeholder="Doinker" />
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <Field label='Length (")' value={setup.stabilisers?.short_rods?.length} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), short_rods: { ...(setup.stabilisers?.short_rods || {}), length: v } })} width={70} />
+              <Field label="Tip weight (oz)" value={setup.stabilisers?.short_rods?.weight} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), short_rods: { ...(setup.stabilisers?.short_rods || {}), weight: v } })} width={90} />
+              <Select label="Damper" value={setup.stabilisers?.short_rods?.damper} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), short_rods: { ...(setup.stabilisers?.short_rods || {}), damper: v } })} options={["Yes", "No"]} />
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.5, marginTop: 12, marginBottom: 4 }}>V-bar</div>
+            <EquipmentPicker category="v_bar" value={setup.stabilisers?.v_bar_equip || {}} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), v_bar_equip: v })} placeholder="Doinker" />
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <Field label="Angle" value={setup.stabilisers?.v_bar?.angle} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), v_bar: { ...(setup.stabilisers?.v_bar || {}), angle: v } })} width={70} />
+              <Select label="Adjustable" value={setup.stabilisers?.v_bar?.adjustable} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), v_bar: { ...(setup.stabilisers?.v_bar || {}), adjustable: v } })} options={["Yes", "No"]} />
+              <Select label="Dampers" value={setup.stabilisers?.v_bar?.dampers} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), v_bar: { ...(setup.stabilisers?.v_bar || {}), dampers: v } })} options={["Yes", "No"]} />
+            </div>
           </Section>
         )}
 
         {/* Riser weights */}
         {eq.riser_weights && (
           <Section title="Riser Weights" defaultOpen={false}>
-            <Field label="Weight (oz)" value={setup.stabilisers?.riser_weight} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), riser_weight: v })} placeholder="4 oz" width={80} />
-            <Field label="Position" value={setup.stabilisers?.riser_weight_position} onChange={v => u("stabilisers", { ...(setup.stabilisers || {}), riser_weight_position: v })} placeholder="Under riser" width={120} />
+            {(setup.riser_weights_list || []).map((w, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "end", marginBottom: 6 }}>
+                <Select label="Position" value={w.position} onChange={v => { const list = [...(setup.riser_weights_list || [])]; list[i] = { ...w, position: v }; u("riser_weights_list", list); }} options={["Top", "Upper", "Middle", "Lower", "Bottom", "Back top", "Back middle", "Back bottom"]} />
+                <Field label="Weight (oz)" value={w.weight} onChange={v => { const list = [...(setup.riser_weights_list || [])]; list[i] = { ...w, weight: v }; u("riser_weights_list", list); }} width={80} />
+                <Field label="Material" value={w.material} onChange={v => { const list = [...(setup.riser_weights_list || [])]; list[i] = { ...w, material: v }; u("riser_weights_list", list); }} placeholder="Stainless" width={90} />
+                <button onClick={() => u("riser_weights_list", (setup.riser_weights_list || []).filter((_, j) => j !== i))} style={{ fontSize: 12, padding: "4px 8px", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: "#dc2626", marginBottom: 2 }}>×</button>
+              </div>
+            ))}
+            <button onClick={() => u("riser_weights_list", [...(setup.riser_weights_list || []), { position: "Bottom", weight: "", material: "" }])} style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1px dashed var(--border)", background: "transparent", cursor: "pointer", color: "var(--foreground)" }}>
+              + Add weight
+            </button>
           </Section>
         )}
 
