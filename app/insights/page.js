@@ -26,7 +26,7 @@ export default async function InsightsPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-6xl p-8">
+    <main className="mx-auto max-w-7xl p-8">
       <InsightsDashboard
         stats={platformStats}
         equipPerf={equipPerf || []}
