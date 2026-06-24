@@ -30,9 +30,9 @@ export default async function MySetupPage() {
     : { data: [] };
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <div>
-        <h1 className="text-2xl font-semibold">My Setup</h1>
+        <h1 className="text-3xl font-bold">My Setup</h1>
         <p className="text-sm opacity-50 mt-1">Your bows, arrows, sights, and equipment — all in one place.</p>
       </div>
       <SetupManager

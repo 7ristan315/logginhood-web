@@ -54,19 +54,29 @@ function Select({ label, value, onChange, options, placeholder }) {
   );
 }
 
+const SECTION_ICONS = {
+  Riser: "🏹", Limbs: "🌿", Sight: "🎯", "Crawl Marks": "🤏", "Button / Plunger": "🔘",
+  Clicker: "📏", "Arrow Rest": "🪶", "Release Aid": "🤞", "Scope / Lens": "🔭",
+  Tab: "🧤", Sling: "🔗", String: "🧵", Stabilisers: "⚖️", "Riser Weights": "🏋️",
+  Arrows: "➡️",
+};
+
 function Section({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ borderRadius: 12, overflow: "hidden", background: open ? "rgba(255,255,255,0.02)" : "transparent", border: "1px solid var(--border)", transition: "background 0.2s" }}>
       <button onClick={() => setOpen(!open)} style={{
-        width: "100%", padding: "10px 14px", background: "var(--card)", border: "none",
+        width: "100%", padding: "12px 16px", background: "transparent", border: "none",
         cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
         fontSize: 14, fontWeight: 600, color: "var(--foreground)",
       }}>
-        {title}
-        <span style={{ opacity: 0.4, fontSize: 12 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>{SECTION_ICONS[title] || "⚙️"}</span>
+          {title}
+        </span>
+        <span style={{ opacity: 0.3, fontSize: 10, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }}>▼</span>
       </button>
-      {open && <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>}
+      {open && <div style={{ padding: "4px 16px 16px", display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>}
     </div>
   );
 }
@@ -302,32 +312,33 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
   }
 
   return (
-    <div style={{ border: "2px solid var(--border)", borderRadius: 14, overflow: "hidden", background: "var(--card)" }}>
+    <div style={{ borderRadius: 16, overflow: "hidden", background: "var(--card)", boxShadow: "0 4px 24px rgba(0,0,0,0.15)", border: `2px solid ${setup.is_active ? (setup.colour || "var(--accent)") : "var(--border)"}` }}>
       {/* Header */}
-      <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 24 }}>{BOW_ICON[setup.bow_type]}</span>
+      <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: `${setup.colour || "var(--accent)"}12`, borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: setup.colour || "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+            {BOW_ICON[setup.bow_type]}
+          </div>
           <div>
             <input value={setup.name} onChange={e => u("name", e.target.value)}
-              style={{ fontSize: 16, fontWeight: 700, border: "none", background: "transparent", color: "var(--foreground)", width: 200, padding: 0 }} />
-            <div style={{ fontSize: 12, opacity: 0.5 }}>{setup.bow_type}</div>
+              style={{ fontSize: 18, fontWeight: 700, border: "none", background: "transparent", color: "var(--foreground)", width: 220, padding: 0 }} />
+            <div style={{ fontSize: 12, opacity: 0.5, marginTop: 1 }}>{setup.bow_type}{setup.version > 1 ? ` · v${setup.version}` : ""}</div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <label title="Setup colour" style={{ position: "relative", cursor: "pointer" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: setup.colour || "var(--accent)", border: "2px solid var(--border)" }} />
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: setup.colour || "var(--accent)", border: "2px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }} />
             <input type="color" value={setup.colour || "#1a6bbf"} onChange={e => u("colour", e.target.value)}
               style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }} />
           </label>
-          {setup.is_active && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: setup.colour || "var(--accent)", color: "#fff", fontWeight: 600 }}>Active</span>}
-          <label style={{ fontSize: 11, display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
-            <input type="checkbox" checked={setup.is_active ?? false} onChange={e => u("is_active", e.target.checked)} style={{ accentColor: setup.colour || "var(--accent)" }} />
-            Active
+          <label style={{ fontSize: 12, display: "flex", gap: 5, alignItems: "center", cursor: "pointer", padding: "5px 12px", borderRadius: 8, background: setup.is_active ? (setup.colour || "var(--accent)") : "transparent", color: setup.is_active ? "#fff" : "var(--foreground)", border: setup.is_active ? "none" : "1px solid var(--border)", fontWeight: setup.is_active ? 600 : 400, transition: "all 0.2s" }}>
+            <input type="checkbox" checked={setup.is_active ?? false} onChange={e => u("is_active", e.target.checked)} style={{ accentColor: "#fff", display: "none" }} />
+            {setup.is_active ? "★ Active" : "Set active"}
           </label>
         </div>
       </div>
 
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
         {/* Riser */}
         <Section title="Riser">
           <EquipmentPicker category="riser" value={setup.riser_equip || {}} onChange={v => u("riser_equip", v)} placeholder="Hoyt" />
@@ -507,18 +518,18 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
         </Section>
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 8 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", paddingTop: 12, borderTop: "1px solid var(--border)", marginTop: 8 }}>
           <button onClick={save} disabled={saving}
-            style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: saving ? "wait" : "pointer", fontWeight: 700, fontSize: 14 }}>
+            style={{ padding: "10px 24px", borderRadius: 10, background: setup.colour || "var(--accent)", color: "#fff", border: "none", cursor: saving ? "wait" : "pointer", fontWeight: 700, fontSize: 14, boxShadow: "0 2px 8px rgba(0,0,0,0.2)", transition: "transform 0.1s", transform: saving ? "scale(0.97)" : "scale(1)" }}>
             {saving ? "Saving…" : "Save setup"}
           </button>
           {setup.id && (
             <button onClick={() => { if (confirm("Delete this setup?")) { onDelete(setup.id); } }}
-              style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #dc2626", background: "transparent", cursor: "pointer", color: "#dc2626", fontSize: 13 }}>
+              style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid rgba(220,38,38,0.3)", background: "rgba(220,38,38,0.08)", cursor: "pointer", color: "#dc2626", fontSize: 13, fontWeight: 500 }}>
               Delete
             </button>
           )}
-          {msg && <span style={{ fontSize: 13, color: msg.includes("✓") ? "var(--accent)" : "#dc2626" }}>{msg}</span>}
+          {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.includes("✓") ? "#22c55e" : "#dc2626", animation: "fadeIn 0.3s ease" }}>{msg}</span>}
         </div>
       </div>
     </div>
@@ -547,10 +558,10 @@ export default function SetupManager({ setups: initial, sightMarks, crawlMarks, 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {setups.length === 0 && !adding && (
-        <div style={{ textAlign: "center", padding: "40px 20px", opacity: 0.5 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🏹</div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>No setups yet</div>
-          <div style={{ fontSize: 13, marginTop: 4 }}>Create your first bow setup to track your equipment and sight marks.</div>
+        <div style={{ textAlign: "center", padding: "60px 24px", borderRadius: 16, background: "var(--card)", border: "1px dashed var(--border)" }}>
+          <div style={{ fontSize: 56, marginBottom: 12 }}>🏹</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No setups yet</div>
+          <div style={{ fontSize: 14, opacity: 0.5, maxWidth: 360, margin: "0 auto" }}>Create your first bow setup to track your equipment, sight marks, and unlock performance insights.</div>
         </div>
       )}
 
@@ -566,21 +577,26 @@ export default function SetupManager({ setups: initial, sightMarks, crawlMarks, 
       ))}
 
       {adding ? (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "12px 16px", border: "1px dashed var(--border)", borderRadius: 10 }}>
-          <Select label="Bow type" value={newType} onChange={v => setNewType(v)} options={BOW_TYPES} />
-          <button onClick={addNew} style={{ padding: "6px 16px", borderRadius: 6, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, marginTop: 18 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "end", padding: "16px 20px", border: "1px solid var(--border)", borderRadius: 14, background: "var(--card)" }}>
+          <div style={{ flex: 1 }}>
+            <Select label="Bow type" value={newType} onChange={v => setNewType(v)} options={BOW_TYPES} />
+          </div>
+          <button onClick={addNew} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent)", color: "var(--accent-foreground)", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>
             Create
           </button>
-          <button onClick={() => setAdding(false)} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", fontSize: 13, marginTop: 18 }}>
+          <button onClick={() => setAdding(false)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", fontSize: 13 }}>
             Cancel
           </button>
         </div>
       ) : (
         <button onClick={() => setAdding(true)} style={{
-          padding: "12px 20px", borderRadius: 10, border: "2px dashed var(--border)",
-          background: "transparent", cursor: "pointer", fontSize: 14, fontWeight: 600,
-          color: "var(--foreground)", opacity: 0.7,
-        }}>
+          padding: "16px 24px", borderRadius: 14, border: "2px dashed var(--border)",
+          background: "transparent", cursor: "pointer", fontSize: 15, fontWeight: 600,
+          color: "var(--foreground)", opacity: 0.6, width: "100%",
+          transition: "opacity 0.2s, border-color 0.2s",
+        }}
+          onMouseEnter={e => { e.target.style.opacity = 1; e.target.style.borderColor = "var(--accent)"; }}
+          onMouseLeave={e => { e.target.style.opacity = 0.6; e.target.style.borderColor = "var(--border)"; }}>
           + New bow setup
         </button>
       )}
