@@ -102,10 +102,41 @@ function applyFilters(data, filters) {
 
 const tooltipStyle = { backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
 
+function Breadcrumb({ path, onNavigate }) {
+  if (!path.length) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: "8px 14px", borderRadius: 10, background: "var(--card)", border: "1px solid var(--border)", fontSize: 13 }}>
+      <button onClick={() => onNavigate([])} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", fontWeight: 600, padding: 0 }}>All</button>
+      {path.map((p, i) => (
+        <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ opacity: 0.3 }}>›</span>
+          <button onClick={() => onNavigate(path.slice(0, i + 1))}
+            style={{ background: i === path.length - 1 ? "var(--accent)" : "none", color: i === path.length - 1 ? "#fff" : "var(--accent)", border: "none", cursor: "pointer", fontWeight: 600, padding: i === path.length - 1 ? "2px 10px" : 0, borderRadius: 6 }}>
+            {p.label}
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Main Dashboard ──
 export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey }) {
   const [tab, setTab] = useState("Overview");
   const [filters, setFilters] = useState({});
+  const [drillPath, setDrillPath] = useState([]);
+
+  function drill(key, value, label) {
+    setDrillPath(prev => [...prev, { key, value, label: label || value }]);
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }
+
+  function navigateDrill(newPath) {
+    setDrillPath(newPath);
+    const newFilters = {};
+    newPath.forEach(p => { newFilters[p.key] = p.value; });
+    setFilters(newFilters);
+  }
 
   // ── Derived data ──
   const epiData = useMemo(() => {
@@ -235,7 +266,8 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 4 }}>
         {TABS.map(t => (
-          <button key={t} onClick={() => { setTab(t); setFilters({}); }}
+          <button key={t}
+            onClick={() => { setTab(t); setFilters({}); setDrillPath([]); }}
             style={{
               padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: tab === t ? 700 : 400, cursor: "pointer",
               background: tab === t ? "var(--accent)" : "transparent",
@@ -251,6 +283,8 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ OVERVIEW ═══ */}
       {tab === "Overview" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
             <StatCard value={stats?.total_archers?.toLocaleString()} label="Archers" sub="On platform" colour="#1A9B6B" large />
             <StatCard value={stats?.total_rounds?.toLocaleString()} label="Rounds scored" sub="All time" colour="#2563EB" large />
@@ -259,10 +293,11 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <ChartCard title="Riser Market Share" subtitle="By active archer count">
+            <ChartCard title={drillPath.some(p => p.key === "riser") ? `Riser Detail: ${filters.riser}` : "Riser Market Share"} subtitle="Click a segment to drill down">
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie data={marketPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={50} paddingAngle={2} label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={{ strokeWidth: 1 }} style={{ fontSize: 11 }}>
+                  <Pie data={marketPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={50} paddingAngle={2} label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={{ strokeWidth: 1 }} style={{ fontSize: 11, cursor: "pointer" }}
+                    onClick={(_, idx) => { const item = marketPie[idx]; if (item) drill("riser", item.name, item.name); }}>
                     {marketPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={tooltipStyle} />
@@ -285,14 +320,14 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
             </ChartCard>
           </div>
 
-          <ChartCard title="Top Performing Risers" subtitle="Average score across all rounds (min 15 sample)">
+          <ChartCard title="Top Performing Risers" subtitle="Click a bar to drill into that riser's data">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={riserEpi} layout="vertical">
+              <BarChart data={riserEpi} layout="vertical" onClick={(e) => { if (e?.activeLabel) drill("riser", e.activeLabel, e.activeLabel); }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "var(--foreground)" }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)" }} width={160} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)", cursor: "pointer" }} width={160} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v, name) => [v, name === "avg" ? "Avg Score" : name]} />
-                <Bar dataKey="avg" name="Avg Score" fill="var(--accent)" radius={[0, 6, 6, 0]}>
+                <Bar dataKey="avg" name="Avg Score" fill="var(--accent)" radius={[0, 6, 6, 0]} cursor="pointer">
                   {riserEpi.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
               </BarChart>
@@ -304,6 +339,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ EPI RANKINGS ═══ */}
       {tab === "EPI Rankings" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
             { key: "round_name", label: "Round" },
@@ -314,12 +350,12 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
             <ChartCard title="Sight EPI Rankings" subtitle="Wilson score-adjusted performance index"
               methodology="EPI uses the Wilson score interval — a Bayesian method that balances observed performance against sample size. Products with few observations are penalised, preventing small samples from dominating rankings. z=1.96 (95% confidence).">
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={epiData} layout="vertical">
+                <BarChart data={epiData} layout="vertical" onClick={(e) => { if (e?.activeLabel) drill("sight_name", e.activeLabel, `Sight: ${e.activeLabel}`); }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--foreground)" }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)" }} width={140} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)", cursor: "pointer" }} width={140} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v, name) => [name === "epi" ? `${v}/100` : v, name === "epi" ? "EPI Score" : "Sample"]} />
-                  <Bar dataKey="epi" name="EPI" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="epi" name="EPI" radius={[0, 6, 6, 0]} cursor="pointer">
                     {epiData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Bar>
                 </BarChart>
@@ -376,6 +412,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ SETUP DNA ═══ */}
       {tab === "Setup DNA" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
             { key: "round_name", label: "Round" },
@@ -385,12 +422,12 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
           <ChartCard title="Archer Population by Score Level" subtitle="How many archers at each performance tier"
             methodology="Score brackets divide the population into skill tiers. Each archer is counted once per bracket based on their average score for the filtered round/bow combination.">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dnaChart}>
+              <BarChart data={dnaChart} onClick={(e) => { if (e?.activeLabel) drill("score_bracket", e.activeLabel, `Level: ${e.activeLabel}`); }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="bracket" tick={{ fontSize: 11, fill: "var(--foreground)" }} />
+                <XAxis dataKey="bracket" tick={{ fontSize: 11, fill: "var(--foreground)", cursor: "pointer" }} />
                 <YAxis tick={{ fontSize: 11, fill: "var(--foreground)" }} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="archers" name="Archers" fill="var(--accent)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="archers" name="Archers" fill="var(--accent)" radius={[6, 6, 0, 0]} cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -428,6 +465,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ ARROW ANALYSIS ═══ */}
       {tab === "Arrow Analysis" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
             { key: "round_name", label: "Round" },
@@ -451,12 +489,12 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
 
             <ChartCard title="Arrow Rankings" subtitle="By average score (min 10 samples)">
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={arrowChart} layout="vertical">
+                <BarChart data={arrowChart} layout="vertical" onClick={(e) => { if (e?.activeLabel) drill("arrow_name", e.activeLabel, `Arrow: ${e.activeLabel}`); }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis type="number" tick={{ fontSize: 11, fill: "var(--foreground)" }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)" }} width={140} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)", cursor: "pointer" }} width={140} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="avg" name="Avg Score" fill="#D97706" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="avg" name="Avg Score" fill="#D97706" radius={[0, 6, 6, 0]} cursor="pointer">
                     {arrowChart.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Bar>
                 </BarChart>
@@ -499,15 +537,17 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ MARKET SHARE ═══ */}
       {tab === "Market Share" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
           ]} values={filters} onChange={setFilters} data={marketShare} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <ChartCard title="Riser Market Share" subtitle="By number of active archers">
+            <ChartCard title="Riser Market Share" subtitle="Click to drill into a brand">
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
-                  <Pie data={marketPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} innerRadius={60} paddingAngle={2} label={({ name, percent }) => percent > 0.04 ? `${name} ${(percent*100).toFixed(0)}%` : ""} style={{ fontSize: 11 }}>
+                  <Pie data={marketPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} innerRadius={60} paddingAngle={2} label={({ name, percent }) => percent > 0.04 ? `${name} ${(percent*100).toFixed(0)}%` : ""} style={{ fontSize: 11, cursor: "pointer" }}
+                    onClick={(_, idx) => { const item = marketPie[idx]; if (item) drill("riser", item.name, `Riser: ${item.name}`); }}>
                     {marketPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={tooltipStyle} />
@@ -515,10 +555,11 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Sight Market Share" subtitle="By number of active archers">
+            <ChartCard title="Sight Market Share" subtitle="Click to drill into a brand">
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
-                  <Pie data={sightPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} innerRadius={60} paddingAngle={2} label={({ name, percent }) => percent > 0.04 ? `${name} ${(percent*100).toFixed(0)}%` : ""} style={{ fontSize: 11 }}>
+                  <Pie data={sightPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} innerRadius={60} paddingAngle={2} label={({ name, percent }) => percent > 0.04 ? `${name} ${(percent*100).toFixed(0)}%` : ""} style={{ fontSize: 11, cursor: "pointer" }}
+                    onClick={(_, idx) => { const item = sightPie[idx]; if (item) drill("sight_name", item.name, `Sight: ${item.name}`); }}>
                     {sightPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={tooltipStyle} />
@@ -560,6 +601,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {/* ═══ SCORE DISTRIBUTION ═══ */}
       {tab === "Score Distribution" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
             { key: "round_name", label: "Round" },
