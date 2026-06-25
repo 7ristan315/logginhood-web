@@ -120,6 +120,82 @@ function Breadcrumb({ path, onNavigate }) {
   );
 }
 
+const EQUIP_CATEGORIES = [
+  { key: "riser", label: "Risers" },
+  { key: "limbs", label: "Limbs" },
+  { key: "sight_name", label: "Sights" },
+  { key: "button_name", label: "Buttons" },
+  { key: "arrow_name", label: "Arrows" },
+];
+
+function EquipmentComboPanel({ equipPerf, arrowPerf, filters, onDrill }) {
+  const activeKeys = Object.entries(filters).filter(([_, v]) => v).map(([k]) => k);
+  if (!activeKeys.length) return null;
+
+  const combos = useMemo(() => {
+    const results = {};
+    const otherCategories = EQUIP_CATEGORIES.filter(c => !activeKeys.includes(c.key));
+
+    otherCategories.forEach(cat => {
+      const source = cat.key === "arrow_name" ? arrowPerf : equipPerf;
+      const filtered = applyFilters(source, filters);
+      const grouped = {};
+      filtered.forEach(r => {
+        const name = r[cat.key] || "Unknown";
+        if (name === "Unknown") return;
+        if (!grouped[name]) grouped[name] = { name, total: 0, count: 0, samples: 0 };
+        const score = r.avg_score || 0;
+        const n = r.sample_size || r.round_count || 1;
+        grouped[name].total += score * n;
+        grouped[name].count += n;
+        grouped[name].samples += n;
+      });
+      const items = Object.values(grouped)
+        .filter(g => g.samples >= 3)
+        .map(g => ({ name: g.name.length > 22 ? g.name.slice(0, 20) + "…" : g.name, fullName: g.name, avg: Math.round(g.total / g.count), samples: g.samples }))
+        .sort((a, b) => b.avg - a.avg)
+        .slice(0, 8);
+      if (items.length > 0) results[cat.key] = { label: cat.label, items };
+    });
+    return results;
+  }, [equipPerf, arrowPerf, filters, activeKeys]);
+
+  const entries = Object.entries(combos);
+  if (!entries.length) return null;
+
+  const drillLabel = activeKeys.map(k => {
+    const cat = EQUIP_CATEGORIES.find(c => c.key === k);
+    return cat ? `${cat.label.slice(0, -1)}: ${filters[k]}` : filters[k];
+  }).join(" + ");
+
+  return (
+    <ChartCard title={`Equipment Used With ${drillLabel}`} subtitle="Click a bar to drill deeper into that combination">
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(entries.length, 3)}, 1fr)`, gap: 16 }}>
+        {entries.map(([key, { label, items }]) => (
+          <div key={key}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{label}</div>
+            <ResponsiveContainer width="100%" height={Math.max(items.length * 32 + 20, 120)}>
+              <BarChart data={items} layout="vertical" onClick={(e) => { if (e?.activeLabel) { const item = items.find(i => i.name === e.activeLabel); if (item) onDrill(key, item.fullName, `${label.slice(0,-1)}: ${item.fullName}`); } }}>
+                <XAxis type="number" tick={{ fontSize: 10, fill: "var(--foreground)" }} hide />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "var(--foreground)", cursor: "pointer" }} width={120} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v, name) => [v, name === "avg" ? "Avg Score" : `${v} rounds`]} />
+                <Bar dataKey="avg" name="Avg Score" radius={[0, 4, 4, 0]} cursor="pointer">
+                  {items.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+              {items.map((item, i) => (
+                <span key={i} style={{ fontSize: 10, opacity: 0.5 }}>{item.name}: {item.samples}n</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </ChartCard>
+  );
+}
+
 // ── Main Dashboard ──
 export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey }) {
   const [tab, setTab] = useState("Overview");
@@ -284,6 +360,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
       {tab === "Overview" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Breadcrumb path={drillPath} onNavigate={navigateDrill} />
+          <EquipmentComboPanel equipPerf={equipPerf} arrowPerf={arrowPerf} filters={filters} onDrill={drill} />
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
             <StatCard value={stats?.total_archers?.toLocaleString()} label="Archers" sub="On platform" colour="#1A9B6B" large />
@@ -345,6 +422,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
             { key: "round_name", label: "Round" },
             { key: "gender", label: "Gender" },
           ]} values={filters} onChange={setFilters} data={equipPerf} />
+          <EquipmentComboPanel equipPerf={equipPerf} arrowPerf={arrowPerf} filters={filters} onDrill={drill} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <ChartCard title="Sight EPI Rankings" subtitle="Wilson score-adjusted performance index"
@@ -541,6 +619,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
           <FilterPanel filters={[
             { key: "bow_type", label: "Bow" },
           ]} values={filters} onChange={setFilters} data={marketShare} />
+          <EquipmentComboPanel equipPerf={equipPerf} arrowPerf={arrowPerf} filters={filters} onDrill={drill} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <ChartCard title="Riser Market Share" subtitle="Click to drill into a brand">
