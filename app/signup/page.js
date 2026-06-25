@@ -44,7 +44,7 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <main className="mx-auto flex max-w-sm flex-col gap-4 p-8">
+      <main className="mx-auto flex max-w-sm flex-col gap-4 p-4 md:p-8">
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p>We&apos;ve sent you a confirmation link to finish creating your account.</p>
       </main>
@@ -52,7 +52,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-sm flex-col gap-4 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">Sign up</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input

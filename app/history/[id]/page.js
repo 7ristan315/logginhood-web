@@ -24,7 +24,7 @@ export default async function HistoryDetailPage({ params }) {
   const pct = normPct(s.score, s.round_name);
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-md flex-col gap-4 p-4 md:p-8">
       <div className="flex items-center justify-between">
         <Link href="/history" className="text-sm hover:text-accent">&larr; Back to history</Link>
         <Link href={`/share/${s.id}`} className="btn-primary text-sm">

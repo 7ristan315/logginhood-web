@@ -283,7 +283,7 @@ function StepPreview({ readyRows, userId, members, onImport, loading }) {
         <p style={{ opacity: 0.5, fontSize: 13, margin: 0 }}>Review the summary below, then confirm.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+      <div className="grid-responsive-3">
         {[
           { label: "Rounds", value: totalRows },
           { label: "Date range", value: dateRange, small: true },

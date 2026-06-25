@@ -595,3 +595,47 @@ a:hover .dash-stat-card {
   border-radius: 2px;
   transition: width 0.4s ease;
 }
+
+/* ── Mobile grid helpers ────────────────────────────────────────────────── */
+
+.grid-responsive-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-responsive-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .grid-responsive-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.grid-responsive-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-4 {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}

@@ -112,7 +112,7 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 1.5rem" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto" }} className="p-4 md:px-6 md:py-8">
       <div style={{ marginBottom: "1.75rem" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
           {greeting}, {name.split(" ")[0]} 🏹

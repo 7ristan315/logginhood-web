@@ -14,7 +14,7 @@ export default async function ProgressPage() {
     .order("shot_at", { ascending: true });
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">Progress</h1>
       <ProgressCharts scores={scores ?? []} />
     </main>

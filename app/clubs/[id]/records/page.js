@@ -46,7 +46,7 @@ export default async function ClubRecordsPage({ params, searchParams }) {
 
   if (!roundOptions.length) {
     return (
-      <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
+      <main className="mx-auto flex max-w-3xl flex-col gap-6 p-4 md:p-8">
         <ClubHeader club={club} />
         <p className="text-sm opacity-70">No scores logged for this club yet.</p>
       </main>

@@ -29,7 +29,7 @@ export default async function ClubsPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">Clubs</h1>
 
       {!clubs?.length ? (

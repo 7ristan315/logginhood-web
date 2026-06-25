@@ -170,7 +170,7 @@ function EquipmentComboPanel({ equipPerf, arrowPerf, filters, onDrill }) {
 
   return (
     <ChartCard title={`Equipment Used With ${drillLabel}`} subtitle="Click a bar to drill deeper into that combination">
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(entries.length, 3)}, 1fr)`, gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))", gap: 16 }}>
         {entries.map(([key, { label, items }]) => (
           <div key={key}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{label}</div>
@@ -335,7 +335,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>Logginhood Insights</h1>
+        <h1 style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>Logginhood Insights</h1>
         <p style={{ fontSize: 14, opacity: 0.5, margin: "4px 0 0" }}>Equipment performance analytics for archery manufacturers</p>
       </div>
 
@@ -369,7 +369,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
             <StatCard value={stats?.active_archers_30d?.toLocaleString()} label="Active (30d)" sub="Scored this month" colour="#D97706" large />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid-responsive-2" style={{ gap: 16 }}>
             <ChartCard title={drillPath.some(p => p.key === "riser") ? `Riser Detail: ${filters.riser}` : "Riser Market Share"} subtitle="Click a segment to drill down">
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -424,7 +424,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
           ]} values={filters} onChange={setFilters} data={equipPerf} />
           <EquipmentComboPanel equipPerf={equipPerf} arrowPerf={arrowPerf} filters={filters} onDrill={drill} />
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid-responsive-2" style={{ gap: 16 }}>
             <ChartCard title="Sight EPI Rankings" subtitle="Wilson score-adjusted performance index"
               methodology="EPI uses the Wilson score interval — a Bayesian method that balances observed performance against sample size. Products with few observations are penalised, preventing small samples from dominating rankings. z=1.96 (95% confidence).">
               <ResponsiveContainer width="100%" height={400}>
@@ -549,7 +549,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
             { key: "round_name", label: "Round" },
           ]} values={filters} onChange={setFilters} data={arrowPerf} />
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid-responsive-2" style={{ gap: 16 }}>
             <ChartCard title="Arrow Performance vs Consistency" subtitle="Avg score vs consistency score (100 - stddev)"
               methodology="Each dot is an arrow model. X-axis = average score. Y-axis = consistency (100 minus standard deviation). Top-right quadrant = high performance AND high consistency — the sweet spot.">
               <ResponsiveContainer width="100%" height={350}>
@@ -621,7 +621,7 @@ export default function InsightsDashboard({ stats, equipPerf, setupDna, arrowPer
           ]} values={filters} onChange={setFilters} data={marketShare} />
           <EquipmentComboPanel equipPerf={equipPerf} arrowPerf={arrowPerf} filters={filters} onDrill={drill} />
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid-responsive-2" style={{ gap: 16 }}>
             <ChartCard title="Riser Market Share" subtitle="Click to drill into a brand">
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>

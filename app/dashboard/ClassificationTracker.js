@@ -151,7 +151,7 @@ export default function ClassificationTracker({ scores, thresholds, profile }) {
       </div>
 
       {/* Tier progression bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "12px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "12px 0", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         {levels.map((level, i) => {
           const data = progress.levels.find(l => l.level === level);
           const achieved = data?.achieved;
@@ -182,7 +182,7 @@ export default function ClassificationTracker({ scores, thresholds, profile }) {
       </div>
 
       {/* Current + next level hero */}
-      <div style={{ display: "grid", gridTemplateColumns: nextData ? "1fr 1fr" : "1fr", gap: 16 }}>
+      <div className={nextData ? "grid-responsive-2" : ""} style={nextData ? { gap: 16 } : { display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
         {/* Current level */}
         <div style={{
           padding: 20, borderRadius: 14,

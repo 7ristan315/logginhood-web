@@ -15,7 +15,7 @@ export default async function SettingsPage() {
     .single();
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-md flex-col gap-4 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">Settings</h1>
 
       <ThemeSettings />

@@ -43,14 +43,14 @@ export default async function ClubPage({ params }) {
 
   if (!club) {
     return (
-      <main className="mx-auto max-w-2xl p-8">
+      <main className="mx-auto max-w-2xl p-4 md:p-8">
         <p>Club not found.</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-wrap items-end justify-between gap-2 border-l-4 border-accent pl-4">
         <div>
           <div className="flex items-center gap-2">

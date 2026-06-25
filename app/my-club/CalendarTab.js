@@ -420,7 +420,7 @@ export default function CalendarTab({ sessions, clubId, userId, userRole, locati
           <form action={async fd => { fd.append("club_id", clubId); await createSession(fd); setShowForm(false); }}
             style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <input type="hidden" name="club_id" value={clubId} />
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+            <div className="grid-responsive-2">
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, fontWeight: 500 }}>
                 Name
                 <input name="name" required placeholder="e.g. Tuesday evening shoot"
@@ -434,7 +434,7 @@ export default function CalendarTab({ sessions, clubId, userId, userRole, locati
                 </select>
               </label>
             </div>
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
+            <div className="grid-responsive-2">
               <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, fontWeight: 500 }}>
                 Location
                 <input name="location" required list="loc-list" placeholder="Select or type"
@@ -457,7 +457,7 @@ export default function CalendarTab({ sessions, clubId, userId, userRole, locati
               <input name="description" placeholder="Optional notes for members"
                 style={{ fontSize: 13, padding: "6px 10px", borderRadius: 6, border: "1px solid var(--accent-light)", background: "var(--background)", color: "var(--foreground)" }} />
             </label>
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
+            <div className="grid-responsive-4">
               {[
                 { name: "session_date", type: "date", label: "Date" },
                 { name: "start_time", type: "time", label: "Start", defaultValue: "19:00" },

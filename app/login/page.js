@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-sm flex-col gap-4 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">Log in</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input

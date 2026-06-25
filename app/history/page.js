@@ -15,7 +15,7 @@ export default async function HistoryPage() {
     .order("shot_at", { ascending: false });
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-4 md:p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">History</h1>
         <Link href="/scores/new" className="btn-primary">
