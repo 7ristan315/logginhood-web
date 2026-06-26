@@ -1,0 +1,31 @@
+<svg width="680" height="340" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="680" height="340" rx="16" fill="#fafafa"/>
+<g transform="translate(240, 20)">
+<circle cx="100" cy="100" r="70" fill="none" stroke="#E65100" stroke-width="1" opacity="0.15"/>
+<circle cx="100" cy="100" r="50" fill="none" stroke="#E65100" stroke-width="1" opacity="0.2"/>
+<circle cx="100" cy="100" r="30" fill="none" stroke="#E65100" stroke-width="1.5" opacity="0.3"/>
+<circle cx="100" cy="100" r="12" fill="#E65100" opacity="0.15"/>
+<circle cx="100" cy="100" r="5" fill="#E65100"/>
+<line x1="10" y1="200" x2="96" y2="104" stroke="#5D4037" stroke-width="3" stroke-linecap="round"/>
+<polygon points="97,103 88,96 92,108" fill="#5D4037"/>
+<line x1="30" y1="182" x2="35" y2="178" stroke="#8D6E63" stroke-width="0.8" opacity="0.6"/>
+<line x1="50" y1="164" x2="55" y2="160" stroke="#8D6E63" stroke-width="0.8" opacity="0.6"/>
+<path d="M12 198 Q0 205 8 195" fill="#5D4037" opacity="0.5"/>
+<path d="M15 202 Q5 212 13 199" fill="#5D4037" opacity="0.4"/>
+<line x1="190" y1="200" x2="104" y2="104" stroke="#00897B" stroke-width="3" stroke-linecap="round"/>
+<polygon points="103,103 112,96 108,108" fill="#00897B"/>
+<circle cx="170" cy="178" r="2.5" fill="#00897B" opacity="0.4"/>
+<circle cx="150" cy="156" r="2.5" fill="#00897B" opacity="0.5"/>
+<circle cx="135" cy="140" r="2.5" fill="#00897B" opacity="0.7"/>
+<circle cx="120" cy="122" r="2.5" fill="#00897B" opacity="0.9"/>
+<line x1="170" y1="178" x2="150" y2="156" stroke="#00897B" stroke-width="0.8" opacity="0.3"/>
+<line x1="150" y1="156" x2="135" y2="140" stroke="#00897B" stroke-width="0.8" opacity="0.3"/>
+<line x1="135" y1="140" x2="120" y2="122" stroke="#00897B" stroke-width="0.8" opacity="0.3"/>
+<circle cx="100" cy="100" r="8" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.6"/>
+</g>
+<text x="340" y="268" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="34" font-weight="500" letter-spacing="4">
+<tspan fill="#5D4037">LOGGIN</tspan><tspan fill="#00897B">HOOD</tspan>
+</text>
+<text x="340" y="292" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#E65100" letter-spacing="2.5">LOGGINHOOD.COM</text>
+<text x="340" y="320" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#888" letter-spacing="1.5" font-style="italic">WHERE TRADITION MEETS DATA</text>
+</svg>

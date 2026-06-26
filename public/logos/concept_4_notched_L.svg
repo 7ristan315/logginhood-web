@@ -1,0 +1,26 @@
+<svg width="680" height="340" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="680" height="340" rx="16" fill="#fff"/>
+<g transform="translate(255, 25)">
+<path d="M30 0 C28 0 25 3 25 8 L25 155 C25 160 28 162 30 162 C32 162 35 160 35 155 L35 8 C35 3 32 0 30 0Z" fill="#1B5E20"/>
+<path d="M25 8 C22 -2 20 -5 16 -5 C13 -5 12 -3 12 0" fill="none" stroke="#1B5E20" stroke-width="4" stroke-linecap="round"/>
+<rect x="30" y="143" width="130" height="6" rx="1" fill="#1B5E20"/>
+<polygon points="164,146 178,140 178,152" fill="#E8A817"/>
+<polygon points="164,146 178,140 178,152" fill="none" stroke="#C4900A" stroke-width="0.5"/>
+<path d="M16 0 Q-5 80 28 146" fill="none" stroke="#8D6E63" stroke-width="1.5"/>
+<circle cx="28" cy="146" r="3" fill="#8D6E63"/>
+<rect x="35" y="141" width="18" height="3" rx="1" fill="#E8A817" opacity="0.4"/>
+<rect x="35" y="148" width="18" height="3" rx="1" fill="#E8A817" opacity="0.4"/>
+<circle cx="178" cy="146" r="8" fill="none" stroke="#E8A817" stroke-width="1" opacity="0.3"/>
+<circle cx="178" cy="146" r="14" fill="none" stroke="#E8A817" stroke-width="0.5" opacity="0.15"/>
+</g>
+<text x="340" y="235" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="38" font-weight="500" letter-spacing="5" fill="#1B5E20">LOGGINHOOD</text>
+<g transform="translate(290, 252)">
+<circle cx="0" cy="0" r="2" fill="#E8A817" opacity="0.5"/>
+<circle cx="25" cy="0" r="2" fill="#E8A817" opacity="0.6"/>
+<circle cx="50" cy="0" r="2" fill="#E8A817" opacity="0.7"/>
+<circle cx="75" cy="0" r="2" fill="#E8A817" opacity="0.8"/>
+<circle cx="100" cy="0" r="2" fill="#E8A817" opacity="0.9"/>
+</g>
+<text x="340" y="278" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#888" letter-spacing="2">LOGGINHOOD.COM</text>
+<text x="340" y="310" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#888" letter-spacing="2.5" font-style="italic">SCORE. TRACK. IMPROVE.</text>
+</svg>
