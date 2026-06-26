@@ -42,7 +42,7 @@ export default async function RootLayout({ children }) {
       <body className="h-full flex overflow-hidden">
         <ThemeProvider>
           <SidebarNav messages={messages} user={user} profile={profile} />
-          <div className="flex-1 min-w-0 overflow-y-auto">
+          <div className="flex-1 min-w-0 overflow-y-auto main-content">
             {children}
           </div>
         </ThemeProvider>

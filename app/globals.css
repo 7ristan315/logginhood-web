@@ -75,7 +75,15 @@ body {
   z-index: 20;
 }
 
+.sidebar-desktop {
+  display: none;
+}
+
 @media (min-width: 768px) {
+  .sidebar-desktop {
+    display: flex;
+  }
+
   .sidebar-shell {
     width: 240px;
   }
@@ -661,5 +669,105 @@ a:hover .dash-stat-card {
 @media (min-width: 640px) {
   .grid-responsive-4 {
     grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+
+/* ── Mobile bottom bar ──────────────────────────────────────────────────── */
+
+.mobile-bottom-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--accent) 4%, var(--background));
+  border-top: 1px solid var(--accent-light);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@media (min-width: 768px) {
+  .mobile-bottom-bar {
+    display: none;
+  }
+}
+
+.mobile-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  padding: 6px 0 5px;
+  text-decoration: none;
+  color: var(--foreground);
+  opacity: 0.45;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-tab.active {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.mobile-tab-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  font-style: normal;
+}
+
+.mobile-tab-label {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* More sheet */
+.mobile-more-backdrop {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: flex-end;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .mobile-more-backdrop {
+    display: none;
+  }
+}
+
+.mobile-more-sheet {
+  background: var(--background);
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: sheet-up 0.25s ease;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Add bottom padding to main content on mobile to clear the tab bar */
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
   }
 }
