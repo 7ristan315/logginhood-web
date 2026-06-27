@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { translate } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
+import Avatar from "./ui/Avatar";
 
 const BOW_ICON = { Recurve: "🏹", Compound: "⚙️", Barebow: "🎯", Longbow: "🌲" };
 
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/competitions",    icon: "◉",  key: "nav.competitions" },
   { href: "/world-rankings",  icon: "⊕",  key: "nav.worldRankings" },
   { href: "/clubs",           icon: "◎",  key: "nav.clubs" },
+  { href: "/insights",        icon: "◆",  label: "Insights" },
 ];
 
 const BOTTOM_BAR_ITEMS = [
@@ -98,7 +100,7 @@ function BottomBar({ user, profile, pathname, onSignOut }) {
             {/* Profile link */}
             <Link href="/profile" onClick={() => setMoreOpen(false)}
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", textDecoration: "none", color: "var(--foreground)", borderBottom: "1px solid var(--accent-light)" }}>
-              <Initials name={profile?.full_name} />
+              <Avatar name={profile?.full_name} size="md" />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>{profile?.full_name || "Archer"}</div>
                 {profile?.bow_type && <div style={{ fontSize: 12, opacity: 0.5 }}>{BOW_ICON[profile.bow_type]} {profile.bow_type}</div>}
@@ -220,7 +222,7 @@ export default function SidebarNav({ messages, user, profile }) {
             </div>
             <div style={{ padding: "0 0.5rem" }}>
               <Link href="/profile" className="sidebar-profile">
-                <Initials name={profile?.full_name} />
+                <Avatar name={profile?.full_name} size="md" />
                 <div className="sidebar-profile-info">
                   <span className="sidebar-profile-name">{profile?.full_name || "Archer"}</span>
                   {profile?.bow_type && (
@@ -239,7 +241,7 @@ export default function SidebarNav({ messages, user, profile }) {
                 <Link key={item.href} href={item.href}
                   className={`sidebar-item ${isActive(item.href) ? "active" : ""}`}>
                   <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
-                  <span className="sidebar-item-label">{t(item.key)}</span>
+                  <span className="sidebar-item-label">{item.label || t(item.key)}</span>
                 </Link>
               ))}
               <a href="https://logginhood.vercel.app" target="_blank" rel="noreferrer"

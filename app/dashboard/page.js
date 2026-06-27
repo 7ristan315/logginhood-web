@@ -112,23 +112,21 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }} className="p-4 md:px-6 md:py-8">
-      <div style={{ marginBottom: "1.75rem" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
-          {greeting}, {name.split(" ")[0]} 🏹
-        </h1>
+    <main className="mx-auto max-w-4xl p-4 md:px-6 md:py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">{greeting}, {name.split(" ")[0]} 🏹</h1>
         {scores.length > 0 && (
-          <p style={{ margin: "0.3rem 0 0", opacity: 0.5, fontSize: 13 }}>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
             {scores.length} rounds logged · last shot {scores[0]?.shot_at?.slice(0, 10)}
           </p>
         )}
       </div>
 
       {scores.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "4rem 2rem", opacity: 0.5 }}>
-          <div style={{ fontSize: 48, marginBottom: "1rem" }}>🎯</div>
-          <p style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>No rounds logged yet</p>
-          <p style={{ fontSize: 14 }}>Open the app and shoot your first round to see your stats here.</p>
+        <div className="flex flex-col items-center gap-3 py-16 text-center" style={{ color: "var(--text-tertiary)" }}>
+          <span className="text-5xl">🎯</span>
+          <p className="text-lg">No rounds logged yet</p>
+          <p className="text-sm">Open the app and shoot your first round to see your stats here.</p>
         </div>
       ) : (
         <>
@@ -140,7 +138,7 @@ export default async function DashboardPage() {
             sparklineData={sparklineData}
             sparklineRound={sparklineRound}
           />
-          <div style={{ marginTop: "2rem" }}>
+          <div className="mt-8">
             <ClassificationTracker
               scores={scores}
               thresholds={clsThresholds || []}
@@ -149,6 +147,6 @@ export default async function DashboardPage() {
           </div>
         </>
       )}
-    </div>
+    </main>
   );
 }

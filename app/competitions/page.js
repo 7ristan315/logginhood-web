@@ -83,8 +83,8 @@ export default async function CompetitionsPage({ searchParams }) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Competitions</h1>
-          <p className="text-sm opacity-60">Online archery competitions — shoot in your own time and submit your score.</p>
+          <h1 className="text-2xl font-bold">Competitions</h1>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Online archery competitions — shoot in your own time and submit your score.</p>
         </div>
         {canCreate && (
           <Link href="/competitions/new" className="btn-primary shrink-0 text-sm">
