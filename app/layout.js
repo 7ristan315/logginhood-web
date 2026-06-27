@@ -41,8 +41,9 @@ export default async function RootLayout({ children }) {
       </head>
       <body className="h-full flex overflow-hidden">
         <ThemeProvider>
+          <a href="#main-content" className="skip-to-main">Skip to main content</a>
           <SidebarNav messages={messages} user={user} profile={profile} />
-          <div className="flex-1 min-w-0 overflow-y-auto main-content">
+          <div id="main-content" className="flex-1 min-w-0 overflow-y-auto main-content" role="main">
             {children}
           </div>
         </ThemeProvider>
