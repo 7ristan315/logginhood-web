@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import InsightsShell from "./InsightsShell";
 
@@ -8,6 +9,8 @@ export const metadata = {
 
 export default async function InsightsPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const [
     { data: platformStats },

@@ -10,12 +10,13 @@ export async function createClub(formData) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const name = formData.get("name");
-  const location = formData.get("location") || null;
+  const name = formData.get("name")?.toString().trim().slice(0, 100);
+  const location = formData.get("location")?.toString().trim().slice(0, 200) || null;
   const governingBodyId = formData.get("governingBodyId") || null;
-  const affiliationNumber = formData.get("affiliationNumber") || null;
-  const officialEmail = formData.get("officialEmail") || null;
-  if (!name) return;
+  const affiliationNumber = formData.get("affiliationNumber")?.toString().trim().slice(0, 50) || null;
+  const officialEmail = formData.get("officialEmail")?.toString().trim().slice(0, 200) || null;
+  if (!name || name.length < 2) return;
+  if (officialEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(officialEmail)) return;
 
   await supabase.from("clubs").insert({
     name,

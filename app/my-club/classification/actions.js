@@ -25,6 +25,8 @@ async function assertOfficer(supabase, clubId) {
 export async function updateScoreClassification(scoreId, classification, clubId) {
   const supabase = await createClient();
   await assertOfficer(supabase, clubId);
+  const { data: score } = await supabase.from("scores").select("club_id").eq("id", scoreId).single();
+  if (!score || score.club_id !== clubId) return;
   await supabase.from("scores").update({ classification }).eq("id", scoreId);
   revalidatePath("/my-club");
 }
@@ -35,7 +37,7 @@ export async function bulkUpdateClassifications(updates, clubId) {
   for (let i = 0; i < updates.length; i += 50) {
     const batch = updates.slice(i, i + 50);
     await Promise.all(
-      batch.map(u => supabase.from("scores").update({ classification: u.classification }).eq("id", u.id))
+      batch.map(u => supabase.from("scores").update({ classification: u.classification }).eq("id", u.id).eq("club_id", clubId))
     );
   }
   revalidatePath("/my-club");

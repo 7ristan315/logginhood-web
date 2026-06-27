@@ -140,6 +140,14 @@ export async function saveArrowSet(setupId, arrow) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not logged in" };
 
+  const { data: setup } = await supabase.from("bow_setups").select("id").eq("id", setupId).eq("profile_id", user.id).single();
+  if (!setup) return { error: "Setup not found" };
+
+  if (arrow.id) {
+    const { data: existing } = await supabase.from("setup_arrows").select("setup_id").eq("id", arrow.id).single();
+    if (!existing || existing.setup_id !== setupId) return { error: "Arrow set not found" };
+  }
+
   const row = {
     setup_id: setupId,
     name: arrow.name,
@@ -177,6 +185,11 @@ export async function deleteArrowSet(id) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not logged in" };
+
+  const { data: arrow } = await supabase.from("setup_arrows").select("setup_id").eq("id", id).single();
+  if (!arrow) return { error: "Arrow set not found" };
+  const { data: setup } = await supabase.from("bow_setups").select("id").eq("id", arrow.setup_id).eq("profile_id", user.id).single();
+  if (!setup) return { error: "Not authorised" };
 
   const { error } = await supabase.from("setup_arrows").delete().eq("id", id);
   if (error) return { error: error.message };

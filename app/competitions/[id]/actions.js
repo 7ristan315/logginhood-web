@@ -14,7 +14,7 @@ export async function enterCompetition(formData) {
   const bow_type = formData.get("bow_type")?.toString() || null;
   const notes = formData.get("notes")?.toString().trim().slice(0, 200) || null;
 
-  if (!competition_id || isNaN(score) || score < 0) {
+  if (!competition_id || isNaN(score) || score < 0 || score > 1440) {
     revalidatePath(`/competitions/${competition_id}`);
     return;
   }
@@ -22,7 +22,7 @@ export async function enterCompetition(formData) {
   // Verify competition is active
   const { data: comp } = await supabase
     .from("competitions")
-    .select("start_date, end_date, max_entries, status, bow_type")
+    .select("start_date, end_date, max_entries, status, bow_type, round_name")
     .eq("id", competition_id)
     .single();
 
