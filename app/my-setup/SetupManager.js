@@ -64,7 +64,7 @@ const SECTION_ICONS = {
 function Section({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ borderRadius: 12, overflow: "hidden", background: open ? "rgba(255,255,255,0.02)" : "transparent", border: "1px solid var(--border)", transition: "background 0.2s" }}>
+    <div style={{ borderRadius: 12, background: open ? "rgba(255,255,255,0.02)" : "transparent", border: "1px solid var(--border)", transition: "background 0.2s" }}>
       <button onClick={() => setOpen(!open)} style={{
         width: "100%", padding: "12px 16px", background: "transparent", border: "none",
         cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -312,9 +312,9 @@ function SetupCard({ setup: initial, sightMarks: initSM, crawlMarks: initCM, arr
   }
 
   return (
-    <div style={{ borderRadius: 16, overflow: "hidden", background: "var(--card)", boxShadow: "0 4px 24px rgba(0,0,0,0.15)", border: `2px solid ${setup.is_active ? (setup.colour || "var(--accent)") : "var(--border)"}` }}>
+    <div style={{ borderRadius: 16, background: "var(--card)", boxShadow: "0 4px 24px rgba(0,0,0,0.15)", border: `2px solid ${setup.is_active ? (setup.colour || "var(--accent)") : "var(--border)"}` }}>
       {/* Header */}
-      <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: `${setup.colour || "var(--accent)"}12`, borderBottom: "1px solid var(--border)" }}>
+      <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: `${setup.colour || "var(--accent)"}12`, borderBottom: "1px solid var(--border)", borderRadius: "14px 14px 0 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: setup.colour || "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
             {BOW_ICON[setup.bow_type]}
