@@ -10,10 +10,21 @@ function ProductSearch({ label, value, onChange, catalog, category }) {
   const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
   const items = useMemo(() => {
-    if (!query) return catalog.filter(c => c.category === category).slice(0, 15);
     const q = query.toLowerCase();
-    return catalog.filter(c => c.category === category && (`${c.brand} ${c.model}`.toLowerCase().includes(q))).slice(0, 15);
+    return catalog.filter(c => c.category === category && (!q || `${c.brand} ${c.model}`.toLowerCase().includes(q))).slice(0, 20);
   }, [catalog, category, query]);
+
+  function handleFocus() {
+    setOpen(true);
+    setQuery("");
+  }
+
+  function handleSelect(item) {
+    const val = `${item.brand} ${item.model}`;
+    onChange(val);
+    setQuery(val);
+    setOpen(false);
+  }
 
   return (
     <div className="relative">
@@ -21,17 +32,17 @@ function ProductSearch({ label, value, onChange, catalog, category }) {
       <input
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onFocus={handleFocus}
         placeholder="Search brand or model…"
         className="w-full py-2 px-3 text-sm rounded-lg border"
         style={{ background: "var(--surface-1)", borderColor: value ? "var(--accent)" : "var(--border)", color: "var(--text-primary)" }}
       />
       {open && items.length > 0 && (
-        <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border overflow-hidden max-h-48 overflow-y-auto"
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border overflow-hidden max-h-60 overflow-y-auto"
           style={{ background: "var(--surface-1)", borderColor: "var(--border)", boxShadow: "var(--shadow-lg)" }}>
           {items.map((item, i) => (
             <button key={`${item.brand}-${item.model}-${i}`}
-              onClick={() => { onChange(`${item.brand} ${item.model}`); setQuery(`${item.brand} ${item.model}`); setOpen(false); }}
+              onClick={() => handleSelect(item)}
               className="w-full text-left px-3 py-2 text-sm border-none cursor-pointer"
               style={{ background: "transparent", color: "var(--text-primary)", borderBottom: "1px solid var(--border-subtle)" }}
               onMouseEnter={e => e.target.style.background = "var(--surface-2)"}
@@ -209,12 +220,12 @@ export default function ProductPerformance({ equipPerf, catalog, filters }) {
               </thead>
               <tbody>
                 {comparisonData.map(row => {
-                  const diff = row.A - row.B;
+                  const diff = Math.round((row.A - row.B) * 10) / 10;
                   return (
                     <tr key={row.metric} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                       <td className="py-2.5 px-3 font-medium">{row.metric}</td>
-                      <td className="py-2.5 px-3 text-right font-bold" style={{ color: row.A >= row.B ? "var(--success)" : "var(--text-primary)" }}>{row.A}</td>
-                      <td className="py-2.5 px-3 text-right font-bold" style={{ color: row.B >= row.A ? "var(--success)" : "var(--text-primary)" }}>{row.B}</td>
+                      <td className="py-2.5 px-3 text-right font-bold" style={{ color: row.A >= row.B ? "var(--success)" : "var(--text-primary)" }}>{Math.round(row.A * 10) / 10}</td>
+                      <td className="py-2.5 px-3 text-right font-bold" style={{ color: row.B >= row.A ? "var(--success)" : "var(--text-primary)" }}>{Math.round(row.B * 10) / 10}</td>
                       <td className="py-2.5 px-3 text-right text-xs font-semibold" style={{ color: diff > 0 ? "var(--success)" : diff < 0 ? "var(--danger)" : "var(--text-tertiary)" }}>
                         {diff > 0 ? "+" : ""}{diff}
                       </td>
