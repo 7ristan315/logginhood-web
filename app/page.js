@@ -26,9 +26,8 @@ export default async function Home() {
     );
   }
 
-  const [{ data: profile }, { data: membership }, { data: scores }] = await Promise.all([
+  const [{ data: profile }, { data: scores }] = await Promise.all([
     supabase.from("profiles").select("full_name, club_id, clubs(id, name)").eq("id", user.id).single(),
-    supabase.from("club_members").select("club_id, role, clubs(id, name)").eq("profile_id", user.id).eq("status", "approved").maybeSingle(),
     supabase
       .from("scores")
       .select("id, round_name, score, shot_at, status")
@@ -36,6 +35,12 @@ export default async function Home() {
       .order("shot_at", { ascending: false })
       .limit(5),
   ]);
+
+  let primaryRole = null;
+  if (profile?.club_id) {
+    const { data: mem } = await supabase.from("club_members").select("role").eq("profile_id", user.id).eq("club_id", profile.club_id).eq("status", "approved").maybeSingle();
+    primaryRole = mem?.role || null;
+  }
 
   const bestScore = scores?.length ? Math.max(...scores.map((s) => s.score)) : null;
 
@@ -84,18 +89,14 @@ export default async function Home() {
 
         <div className="flex flex-col gap-4">
           <Card title={t("home.loggedIn.yourClub")}>
-            {(membership?.clubs || profile?.clubs) ? (() => {
-              const club = membership?.clubs || profile?.clubs;
-              return (
+            {profile?.clubs ? (
                 <div className="flex items-center justify-between gap-2">
-                  <Link href={`/clubs/${club.id}`} className="font-medium hover:text-accent">
-                    {club.name}
+                  <Link href={`/clubs/${profile.clubs.id}`} className="font-medium hover:text-accent">
+                    {profile.clubs.name}
                   </Link>
-                  {membership?.role && membership.role !== "member" && <Badge>{roleLabel(membership.role)}</Badge>}
-                  {!membership && <span className="text-xs opacity-50">Linked</span>}
+                  {primaryRole && primaryRole !== "member" && <Badge>{roleLabel(primaryRole)}</Badge>}
                 </div>
-              );
-            })() : (
+            ) : (
               <EmptyState
                 icon="🏟️"
                 title={t("home.loggedIn.noClub.title")}
