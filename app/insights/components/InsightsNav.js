@@ -13,26 +13,31 @@ const SECTIONS = [
 
 export { SECTIONS };
 
-export default function InsightsNav({ active, onChange }) {
+export default function InsightsNav({ active, onChange, allowedSections }) {
   return (
     <nav className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Insights sections">
-      {SECTIONS.map(s => (
-        <button
-          key={s.id}
-          onClick={() => onChange(s.id)}
-          role="tab"
-          aria-selected={active === s.id}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg whitespace-nowrap cursor-pointer border-none transition-colors"
-          style={{
-            background: active === s.id ? "var(--accent)" : "transparent",
-            color: active === s.id ? "var(--accent-foreground)" : "var(--text-secondary)",
-            fontWeight: active === s.id ? 600 : 400,
-          }}
-        >
-          <span className="text-sm" aria-hidden="true">{s.icon}</span>
-          {s.label}
-        </button>
-      ))}
+      {SECTIONS.map(s => {
+        const locked = allowedSections && !allowedSections.has(s.id);
+        return (
+          <button
+            key={s.id}
+            onClick={() => onChange(s.id)}
+            role="tab"
+            aria-selected={active === s.id}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg whitespace-nowrap cursor-pointer border-none transition-colors"
+            style={{
+              background: active === s.id ? "var(--accent)" : "transparent",
+              color: active === s.id ? "var(--accent-foreground)" : locked ? "var(--text-tertiary)" : "var(--text-secondary)",
+              fontWeight: active === s.id ? 600 : 400,
+              opacity: locked ? 0.6 : 1,
+            }}
+          >
+            <span className="text-sm" aria-hidden="true">{s.icon}</span>
+            {s.label}
+            {locked && <span className="text-xs" aria-hidden="true">🔒</span>}
+          </button>
+        );
+      })}
     </nav>
   );
 }

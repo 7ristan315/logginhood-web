@@ -21,9 +21,33 @@ function applyFilters(data, filters) {
   });
 }
 
-export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog }) {
+const TIER_LABELS = { admin: "Admin", enterprise: "Enterprise", professional: "Professional", starter: "Starter" };
+const TIER_UPGRADE = {
+  starter: { next: "Professional", price: "£750/mo", unlocks: "Product comparison, demographics, arrow lab" },
+  professional: { next: "Enterprise", price: "£2,000/mo", unlocks: "Equipment journey, competitive edge, API access" },
+};
+
+function LockedSection({ tier }) {
+  const upgrade = TIER_UPGRADE[tier];
+  if (!upgrade) return null;
+  return (
+    <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <span className="text-4xl">🔒</span>
+      <h3 className="text-lg font-semibold">Upgrade to {upgrade.next}</h3>
+      <p className="text-sm max-w-md" style={{ color: "var(--text-secondary)" }}>
+        This section requires the {upgrade.next} tier ({upgrade.price}). Unlocks: {upgrade.unlocks}.
+      </p>
+      <a href="mailto:tristan@logginhood.com?subject=Upgrade%20to%20{upgrade.next}" className="btn-primary">
+        Request upgrade
+      </a>
+    </div>
+  );
+}
+
+export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog, tier = "admin", allowedSections, companyName, brandFilter }) {
   const [section, setSection] = useState("overview");
   const [filters, setFilters] = useState({});
+  const allowed = new Set(allowedSections || ["overview", "products", "market", "demographics", "arrows", "journey", "competitive", "methodology"]);
 
   const filtered = useMemo(() => ({
     equip: applyFilters(equipPerf, filters),
@@ -36,15 +60,23 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ letterSpacing: "-0.3px" }}>Logginhood Insights</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-          Equipment performance analytics for the archery industry
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ letterSpacing: "-0.3px" }}>Logginhood Insights</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
+            Equipment performance analytics for the archery industry
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {companyName && <span className="text-xs font-medium" style={{ color: "var(--text-tertiary)" }}>{companyName}</span>}
+          <span className="text-xs font-semibold py-1 px-3 rounded-full" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}>
+            {TIER_LABELS[tier] || tier}
+          </span>
+        </div>
       </div>
 
       {/* Navigation */}
-      <InsightsNav active={section} onChange={setSection} />
+      <InsightsNav active={section} onChange={setSection} allowedSections={allowed} />
 
       {/* Global filters */}
       {section !== "methodology" && (
@@ -56,29 +88,29 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
         <PlatformOverview stats={stats} equipPerf={equipPerf} marketShare={marketShare} filtered={filtered} />
       )}
 
-      {section === "products" && (
+      {section === "products" && (allowed.has("products") ? (
         <ProductPerformance equipPerf={filtered.equip} catalog={catalog || []} filters={filters} />
-      )}
+      ) : <LockedSection tier={tier} />)}
 
       {section === "market" && (
         <MarketIntelligence marketShare={marketShare} equipPerf={equipPerf} switching={switching} filtered={filtered} />
       )}
 
-      {section === "demographics" && (
+      {section === "demographics" && (allowed.has("demographics") ? (
         <ArcherDemographics equipPerf={equipPerf} setupDna={setupDna} filtered={filtered} />
-      )}
+      ) : <LockedSection tier={tier} />)}
 
-      {section === "arrows" && (
+      {section === "arrows" && (allowed.has("arrows") ? (
         <ArrowLab arrowPerf={arrowPerf} filtered={filtered} />
-      )}
+      ) : <LockedSection tier={tier} />)}
 
-      {section === "journey" && (
+      {section === "journey" && (allowed.has("journey") ? (
         <EquipmentJourney journey={journey} filtered={filtered} />
-      )}
+      ) : <LockedSection tier={tier} />)}
 
-      {section === "competitive" && (
+      {section === "competitive" && (allowed.has("competitive") ? (
         <CompetitiveEdge equipPerf={equipPerf} filtered={filtered} />
-      )}
+      ) : <LockedSection tier={tier} />)}
 
       {section === "methodology" && (
         <Methodology />
