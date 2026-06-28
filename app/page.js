@@ -18,10 +18,13 @@ export default async function Home() {
       <main className="flex flex-col items-center gap-6 bg-accent-light px-4 py-12 text-center md:px-8 md:py-20">
         <h1 className="text-3xl font-bold text-accent md:text-5xl">{t("home.loggedOut.title")}</h1>
         <p className="max-w-2xl text-lg text-gray-600">{t("home.loggedOut.subtitle")}</p>
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Button href="/signup" size="lg">{t("home.loggedOut.getStarted")}</Button>
           <Button href="/clubs" variant="secondary" size="lg">{t("home.loggedOut.browseClubs")}</Button>
         </div>
+        <Link href="/features" className="text-sm font-medium underline mt-2" style={{ color: "var(--accent)" }}>
+          See all features
+        </Link>
       </main>
     );
   }

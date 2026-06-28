@@ -36,6 +36,7 @@ const MORE_ITEMS = [
   { href: "/import",          icon: "⬆",  label: "Import Scores" },
   { href: "/profile",         icon: "👤", label: "Profile" },
   { href: "/settings",        icon: "⚙",  label: "Settings" },
+  { href: "/features",        icon: "✦",  label: "All Features" },
 ];
 
 const LOGGED_OUT_ITEMS = [
