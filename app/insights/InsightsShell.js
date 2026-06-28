@@ -6,6 +6,8 @@ import GlobalFilters from "./components/GlobalFilters";
 import PlatformOverview from "./components/PlatformOverview";
 import ProductPerformance from "./components/ProductPerformance";
 import MarketIntelligence from "./components/MarketIntelligence";
+import MarketDrilldown from "./components/MarketDrilldown";
+import BrandHealth from "./components/BrandHealth";
 import ArcherDemographics from "./components/ArcherDemographics";
 import ArrowLab from "./components/ArrowLab";
 import EquipmentJourney from "./components/EquipmentJourney";
@@ -93,7 +95,11 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
       ) : <LockedSection tier={tier} />)}
 
       {section === "market" && (
-        <MarketIntelligence marketShare={marketShare} equipPerf={equipPerf} switching={switching} filtered={filtered} />
+        <div className="flex flex-col gap-6">
+          <MarketDrilldown marketShare={filtered.market} equipPerf={filtered.equip} />
+          <BrandHealth equipPerf={equipPerf} marketShare={marketShare} switching={switching} />
+          <MarketIntelligence marketShare={marketShare} equipPerf={equipPerf} switching={switching} filtered={filtered} />
+        </div>
       )}
 
       {section === "demographics" && (allowed.has("demographics") ? (
