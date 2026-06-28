@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CodesClient from "./CodesClient";
@@ -48,7 +49,10 @@ export default async function CodesPage() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 p-4 md:p-8">
       <div>
-        <h1 className="text-2xl font-bold">Activation codes</h1>
+        <Link href="/insights" className="text-sm font-medium hover:underline" style={{ color: "var(--accent)", textDecoration: "none" }}>
+          ← Back to Insights
+        </Link>
+        <h1 className="text-2xl font-bold mt-1">Activation codes</h1>
         <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
           Generate codes for equipment packaging. Archers redeem at logginhood.com/activate
         </p>

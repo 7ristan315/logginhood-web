@@ -76,7 +76,7 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
       </div>
 
       {/* Navigation */}
-      <InsightsNav active={section} onChange={setSection} allowedSections={allowed} />
+      <InsightsNav active={section} onChange={setSection} allowedSections={allowed} tier={tier} />
 
       {/* Global filters */}
       {section !== "methodology" && (

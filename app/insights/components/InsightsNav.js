@@ -1,19 +1,25 @@
 "use client";
 
+import Link from "next/link";
+
 const SECTIONS = [
-  { id: "overview",     label: "Overview",          icon: "◈" },
+  { id: "overview",     label: "Overview",            icon: "◈" },
   { id: "products",     label: "Product Performance", icon: "⚡" },
   { id: "market",       label: "Market Intelligence", icon: "◉" },
   { id: "demographics", label: "Archer Demographics", icon: "👥" },
-  { id: "arrows",       label: "Arrow Lab",         icon: "➡️" },
-  { id: "journey",      label: "Equipment Journey",  icon: "📈" },
-  { id: "competitive",  label: "Competitive Edge",   icon: "🏆" },
-  { id: "methodology",  label: "Methodology",        icon: "📐" },
+  { id: "arrows",       label: "Arrow Lab",           icon: "➡️" },
+  { id: "journey",      label: "Equipment Journey",   icon: "📈" },
+  { id: "competitive",  label: "Competitive Edge",    icon: "🏆" },
+  { id: "methodology",  label: "Methodology",         icon: "📐" },
+];
+
+const LINKS = [
+  { id: "codes", label: "Activation Codes", icon: "🎟️", href: "/insights/codes", tiers: ["admin", "enterprise"] },
 ];
 
 export { SECTIONS };
 
-export default function InsightsNav({ active, onChange, allowedSections }) {
+export default function InsightsNav({ active, onChange, allowedSections, tier }) {
   return (
     <nav className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Insights sections">
       {SECTIONS.map(s => {
@@ -38,6 +44,24 @@ export default function InsightsNav({ active, onChange, allowedSections }) {
           </button>
         );
       })}
+
+      {LINKS.filter(l => l.tiers.includes(tier)).map(l => (
+        <Link
+          key={l.id}
+          href={l.href}
+          className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg whitespace-nowrap no-underline transition-colors"
+          style={{
+            color: "var(--text-secondary)",
+            background: "transparent",
+            borderLeft: "1px solid var(--border)",
+            marginLeft: 4,
+            paddingLeft: 16,
+          }}
+        >
+          <span className="text-sm" aria-hidden="true">{l.icon}</span>
+          {l.label}
+        </Link>
+      ))}
     </nav>
   );
 }
