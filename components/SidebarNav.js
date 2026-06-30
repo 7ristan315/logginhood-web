@@ -200,7 +200,8 @@ export default function SidebarNav({ messages, user, profile }) {
         {!user ? (
           <>
             <div className="sidebar-logo">
-              <Image src="/brand/logo-header.png" alt="Logginhood" width={120} height={50} priority />
+              <Image className="logo-light" src="/brand/logo-header-light.png" alt="Logginhood" width={150} height={150} priority />
+              <Image className="logo-dark" src="/brand/logo-header-dark.png" alt="Logginhood" width={150} height={150} priority />
             </div>
             <div className="sidebar-nav-items" style={{ marginTop: "2rem" }}>
               {LOGGED_OUT_ITEMS.map(item => (
@@ -218,7 +219,8 @@ export default function SidebarNav({ messages, user, profile }) {
           <>
             <div className="sidebar-logo">
               <Link href="/dashboard">
-                <Image src="/brand/logo-header.png" alt="Logginhood" width={110} height={46} priority />
+                <Image className="logo-light" src="/brand/logo-header-light.png" alt="Logginhood" width={132} height={132} priority />
+                <Image className="logo-dark" src="/brand/logo-header-dark.png" alt="Logginhood" width={132} height={132} priority />
               </Link>
             </div>
             <div style={{ padding: "0 0.5rem" }}>

@@ -17,10 +17,32 @@
   },
   "home": {
     "loggedOut": {
-      "title": "🏹 Logginhood",
-      "subtitle": "The hub for archers, clubs, and scores. Track your progress, join a club, and compare results with archers around the world.",
-      "getStarted": "Get started",
-      "browseClubs": "Browse clubs"
+      "eyebrow": "Powered by every shot",
+      "title": "Every arrow tells a story",
+      "subtitle": "Logginhood is the home for archers, clubs, and scores — AI photo scoring, automatic Archery GB classifications, and progress you can actually see. Join your club and measure up against archers around the world.",
+      "getStarted": "Get started free",
+      "browseClubs": "Browse clubs",
+      "seeFeatures": "See all features",
+      "features": {
+        "heading": "Built for archers who want to get better",
+        "scoring": {
+          "title": "AI photo scoring",
+          "body": "Snap a photo of your target face and Logginhood reads the arrows and totals your round — no manual tallying."
+        },
+        "progress": {
+          "title": "Progress you can see",
+          "body": "Automatic classifications, handicaps, and personal bests tracked across every round you shoot."
+        },
+        "clubs": {
+          "title": "Clubs & competitions",
+          "body": "Join your club, climb the leaderboards, and take part in competitions with archers around the world."
+        }
+      },
+      "cta": {
+        "title": "Ready to track your next round?",
+        "body": "Create a free account and log your first round in minutes.",
+        "action": "Get started free"
+      }
     },
     "loggedIn": {
       "welcomeBack": "Welcome back, {name}",

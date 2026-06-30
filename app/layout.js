@@ -33,7 +33,7 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
         <script dangerouslySetInnerHTML={{
           __html: `(function(){try{var t=JSON.parse(localStorage.getItem("logginhood_theme"));document.documentElement.classList.add(t&&t.mode==="dark"?"dark":"light");}catch(e){document.documentElement.classList.add("light");}})();`,

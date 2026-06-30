@@ -61,7 +61,7 @@ export function applyTheme(theme) {
   const dark = theme.mode === "dark";
   root.classList.toggle("dark", dark);
   root.classList.toggle("light", !dark);
-  const background = dark ? "#0a0a0a" : "#ffffff";
+  const background = dark ? "#0d0d0d" : "#ffffff";
   root.style.setProperty("--accent", theme.accent);
   root.style.setProperty("--accent-light", mix(theme.accent, background, 0.85));
   root.style.setProperty("--accent-foreground", luma(theme.accent) > 0.45 ? "#111111" : "#ffffff");
