@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { renderSliceLabel } from "./pieLabel";
 
 // Target face colours matching the app's RNG map
 const ZONE_COLOR = {
@@ -26,7 +24,30 @@ const BANDS = [
 
 const ZONE_ORDER = ["X","10","9","8","7","6","5","4","3","2","1","M"];
 
-const tooltipStyle = { backgroundColor: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
+function TargetFaceSVG({ data, total }) {
+  const S = 280, c = 140, R = 120;
+  const active = data.filter(d => d.value > 0);
+  if (!active.length) return null;
+  const tot = total || active.reduce((s, d) => s + d.value, 0);
+  let cum = 0;
+  const rings = active.map(d => { const p = d.value / tot, iR = R * Math.sqrt(cum); cum += p; const oR = R * Math.sqrt(cum); return { ...d, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
+  const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
+  return (
+    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto" }}>
+      {[...rings].reverse().map(r => <circle key={r.name} cx={c} cy={c} r={r.oR} fill={r.color} />)}
+      {rings.slice(0, -1).map(r => <circle key={"s" + r.name} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />)}
+      {rings.map(r => {
+        const w = r.oR - r.iR, fs = Math.max(9, Math.min(13, w * 0.5)), y = c - r.mR;
+        if (w < 12) return null;
+        const two = w >= 22, lbl = r.name.split(/\s/)[0];
+        return <g key={"l" + r.name}>
+          {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{lbl}</text>}
+          <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
+        </g>;
+      })}
+    </svg>
+  );
+}
 
 export default function ZoneTargetPie({ zoneDist, filters = {} }) {
   const [bowFilter, setBowFilter] = useState("");
@@ -67,7 +88,7 @@ export default function ZoneTargetPie({ zoneDist, filters = {} }) {
         <div>
           <h3 className="text-sm font-semibold">Zone distribution — target face</h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-            Arrow distribution across scoring zones. Slice size = proportion of arrows in that zone.
+            Arrow distribution across scoring zones. Ring thickness ∝ arrows in that zone.
           </p>
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -92,17 +113,7 @@ export default function ZoneTargetPie({ zoneDist, filters = {} }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie data={pieData} dataKey="value" nameKey="name"
-              cx="50%" cy="50%" outerRadius={120} innerRadius={55}
-              paddingAngle={1} label={renderSliceLabel} labelLine={false}>
-              {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
-            </Pie>
-            <Tooltip contentStyle={tooltipStyle}
-              formatter={(v, name) => [`${v.toLocaleString()} arrows (${total > 0 ? Math.round(v / total * 100) : 0}%)`, name]} />
-          </PieChart>
-        </ResponsiveContainer>
+        <TargetFaceSVG data={pieData} total={total} />
 
         {/* Legend / breakdown table */}
         <div className="flex flex-col gap-1.5">

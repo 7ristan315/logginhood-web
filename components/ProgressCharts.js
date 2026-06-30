@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell,
-  CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie,
+  CartesianGrid, XAxis, YAxis, Tooltip,
 } from "recharts";
 import { ROUNDS, normPct, stdDev } from "@/lib/rounds";
 
@@ -35,6 +35,31 @@ const TABS = [
   ["progress", "Progress"], ["zones", "Zones"], ["averages", "Averages"],
   ["velocity", "Velocity"], ["golds", "Golds"], ["activity", "Activity"], ["stats", "Stats"],
 ];
+
+function TargetFaceSVG({ bars, total }) {
+  const S = 280, c = 140, R = 120;
+  const active = bars.filter(b => b.count > 0).map(b => ({ z: b.zone, display: b.label, color: RNG[b.zone] || "#4caf50", count: b.count }));
+  if (!active.length) return null;
+  const tot = total || active.reduce((s, r) => s + r.count, 0);
+  let cum = 0;
+  const rings = active.map(r => { const p = r.count / tot, iR = R * Math.sqrt(cum); cum += p; const oR = R * Math.sqrt(cum); return { ...r, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
+  const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
+  return (
+    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto" }}>
+      {[...rings].reverse().map(r => <circle key={r.z} cx={c} cy={c} r={r.oR} fill={r.color} />)}
+      {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />)}
+      {rings.map(r => {
+        const w = r.oR - r.iR, fs = Math.max(9, Math.min(13, w * 0.5)), y = c - r.mR;
+        if (w < 12) return null;
+        const two = w >= 22;
+        return <g key={"l" + r.z}>
+          {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{r.display}</text>}
+          <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
+        </g>;
+      })}
+    </svg>
+  );
+}
 
 export default function ProgressCharts({ scores }) {
   const allRounds = useMemo(() => [...new Set(scores.map((s) => s.round_name))].sort(), [scores]);
@@ -232,26 +257,7 @@ export default function ProgressCharts({ scores }) {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie data={distData.bars.filter(b => b.count > 0)} dataKey="count" nameKey="label"
-                      cx="50%" cy="50%" outerRadius={120} innerRadius={52} paddingAngle={1}
-                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
-                        if (percent < 0.03) return null;
-                        const R = Math.PI / 180, pct = Math.round(percent * 100);
-                        if (percent >= 0.07) {
-                          const r = innerRadius + (outerRadius - innerRadius) * 0.5;
-                          const x = cx + r * Math.cos(-midAngle * R), y = cy + r * Math.sin(-midAngle * R);
-                          return <text x={x} y={y} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={2.5} paintOrder="stroke" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={700}>{pct}%</text>;
-                        }
-                        const r = outerRadius + 12, x = cx + r * Math.cos(-midAngle * R), y = cy + r * Math.sin(-midAngle * R);
-                        return <text x={x} y={y} fill="var(--text-secondary)" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11}>{name} {pct}%</text>;
-                      }} labelLine={false}>
-                      {distData.bars.filter(b => b.count > 0).map((d) => <Cell key={d.zone} fill={RNG[d.zone] || "var(--accent)"} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tipStyle} formatter={(v) => [`${v} arrows (${distData.total ? Math.round(v / distData.total * 100) : 0}%)`, "Count"]} />
-                  </PieChart>
-                </ResponsiveContainer>
+                <TargetFaceSVG bars={distData.bars} total={distData.total} />
               )}
               <div className="flex flex-wrap gap-2">
                 {distData.bars.filter((b) => b.count > 0).map((b) => (
