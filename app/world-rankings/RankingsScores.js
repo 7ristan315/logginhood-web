@@ -48,7 +48,7 @@ const COLUMNS = [
   { key: "full_name", label: "Archer", render: (v) => <span className="font-medium">{v}</span> },
   { key: "club_name", label: "Club", render: (v) => <span className="text-sm opacity-70">{v}</span> },
   { key: "round_name", label: "Round" },
-  { key: "shot_at", label: "Date", render: (v) => <span className="tabular-nums opacity-70">{v}</span> },
+  { key: "shot_at", label: "Date", render: (v) => <span className="tabular-nums opacity-70" style={{ whiteSpace: "nowrap" }}>{v}</span> },
   {
     key: "score", label: "Score", align: "right",
     render: (v) => <span className="font-semibold tabular-nums" style={{ color: "var(--accent)" }}>{v}</span>,
@@ -230,7 +230,7 @@ export default function RankingsScores({ scores }) {
 
       <Table
         columns={COLUMNS}
-        rows={rankedRows}
+        rows={rankedRows.slice(0, 25)}
         keyField="id"
         caption="World rankings scores"
         emptyState="No scores match these filters."
