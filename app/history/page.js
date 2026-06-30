@@ -10,7 +10,7 @@ export default async function HistoryPage() {
 
   const { data: scores } = await supabase
     .from("scores")
-    .select("id, round_name, score, golds, shot_at, status, bow_type, age_category, classification")
+    .select("id, round_name, score, hits, golds, shot_at, status, bow_type, age_category, classification")
     .eq("profile_id", user.id)
     .order("shot_at", { ascending: false });
 

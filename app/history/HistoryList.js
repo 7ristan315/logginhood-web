@@ -108,7 +108,7 @@ export default function HistoryList({ scores }) {
                 {[
                   { key: "round_name", label: "Round" },
                   { key: "score", label: "Score" },
-                  { key: "golds", label: "Golds" },
+                  { key: "golds", label: "G", goldHeader: true },
                   { key: "bow_type", label: "Bow" },
                   { key: "classification", label: "Class." },
                   { key: "shot_at", label: "Date" },
@@ -118,7 +118,7 @@ export default function HistoryList({ scores }) {
                     onClick={() => toggleSort(col.key)}
                     className="text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none"
                     style={{ padding: "10px 14px", color: "var(--text-tertiary)", borderBottom: "1px solid var(--border)" }}>
-                    {col.label}{sortIcon(col.key)}
+                    <span style={col.goldHeader ? { color: "#c8a000" } : undefined}>{col.label}</span>{sortIcon(col.key)}
                   </th>
                 ))}
               </tr>
@@ -136,8 +136,9 @@ export default function HistoryList({ scores }) {
                     <td style={{ padding: "10px 14px" }}>
                       <span className="font-bold text-base" style={{ color: "var(--accent)" }}>{s.score}</span>
                       {pct != null && <span className="text-xs ml-1.5" style={{ color: "var(--text-tertiary)" }}>{pct}%</span>}
+                      {s.hits != null && <span className="text-xs ml-1.5" style={{ color: "var(--text-tertiary)" }}>{s.hits}H</span>}
                     </td>
-                    <td style={{ padding: "10px 14px" }}>{s.golds}</td>
+                    <td style={{ padding: "10px 14px", color: "#c8a000", fontWeight: 600 }}>{s.golds ?? "—"}</td>
                     <td style={{ padding: "10px 14px" }}>{s.bow_type || "—"}</td>
                     <td style={{ padding: "10px 14px" }}>
                       {s.classification && s.classification !== "—" ? (
