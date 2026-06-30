@@ -46,7 +46,7 @@ function LockedSection({ tier }) {
   );
 }
 
-export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog, tier = "admin", allowedSections, companyName, brandFilter }) {
+export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog, zoneDist, tier = "admin", allowedSections, companyName, brandFilter }) {
   const [section, setSection] = useState("overview");
   const [filters, setFilters] = useState({});
   const allowed = new Set(allowedSections || ["overview", "products", "market", "demographics", "arrows", "journey", "competitive", "methodology"]);
@@ -107,7 +107,7 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
       ) : <LockedSection tier={tier} />)}
 
       {section === "arrows" && (allowed.has("arrows") ? (
-        <ArrowLab arrowPerf={arrowPerf} filtered={filtered} />
+        <ArrowLab arrowPerf={arrowPerf} filtered={filtered} zoneDist={zoneDist || []} />
       ) : <LockedSection tier={tier} />)}
 
       {section === "journey" && (allowed.has("journey") ? (

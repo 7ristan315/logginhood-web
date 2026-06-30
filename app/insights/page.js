@@ -81,6 +81,7 @@ export default async function InsightsPage() {
     { data: journey },
     { data: switching },
     { data: catalog },
+    { data: zoneDist },
   ] = await Promise.all([
     supabase.from("insights_platform_stats").select("*").single(),
     supabase.from("insights_equipment_performance").select("*").order("sample_size", { ascending: false }).limit(500),
@@ -90,6 +91,7 @@ export default async function InsightsPage() {
     supabase.from("insights_equipment_journey").select("*").order("round_count", { ascending: false }).limit(200),
     supabase.from("insights_switching_events").select("*").limit(500),
     supabase.from("equipment_catalog").select("category, brand, model").order("brand").order("model"),
+    supabase.from("insights_zone_distribution").select("*").order("arrow_count", { ascending: false }).limit(500),
   ]);
 
   return (
@@ -103,6 +105,7 @@ export default async function InsightsPage() {
         journey={journey || []}
         switching={switching || []}
         catalog={catalog || []}
+        zoneDist={zoneDist || []}
         tier={tier}
         allowedSections={allowedSections}
         companyName={membership.company_name}
