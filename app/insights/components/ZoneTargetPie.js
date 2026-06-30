@@ -30,7 +30,7 @@ function TargetFaceSVG({ data, total }) {
   if (!active.length) return null;
   const tot = total || active.reduce((s, d) => s + d.value, 0);
   let cum = 0;
-  const rings = active.map(d => { const p = d.value / tot, iR = R * Math.sqrt(cum); cum += p; const oR = R * Math.sqrt(cum); return { ...d, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
+  const rings = active.map(d => { const p = d.value / tot, iR = R * cum; cum += p; const oR = R * cum; return { ...d, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
   const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
   return (
     <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto" }}>
