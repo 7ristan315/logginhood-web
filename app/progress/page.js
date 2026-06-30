@@ -9,7 +9,7 @@ export default async function ProgressPage() {
 
   const { data: scores } = await supabase
     .from("scores")
-    .select("id, round_name, score, golds, shot_at")
+    .select("id, round_name, score, golds, shot_at, ends")
     .eq("profile_id", user.id)
     .order("shot_at", { ascending: true });
 
