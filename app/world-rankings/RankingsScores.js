@@ -46,7 +46,7 @@ const COLUMNS = [
     render: (v) => <span className="text-xs tabular-nums opacity-40">{v}</span>,
   },
   { key: "full_name", label: "Archer", render: (v) => <span className="font-medium">{v}</span> },
-  { key: "club_name", label: "Club", render: (v) => <span className="text-sm opacity-70">{v}</span> },
+  { key: "club_name", label: "Club", render: (v) => <span className="text-sm opacity-70" title={v}>{v?.split(' ').map(w=>w[0]).join('').toUpperCase() ?? '—'}</span> },
   { key: "round_name", label: "Round" },
   { key: "shot_at", label: "Date", render: (v) => <span className="tabular-nums opacity-70" style={{ whiteSpace: "nowrap" }}>{v}</span> },
   {
