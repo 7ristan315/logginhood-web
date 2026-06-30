@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell,
-  CartesianGrid, XAxis, YAxis, Tooltip,
+  CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie,
 } from "recharts";
 import { ROUNDS, normPct, stdDev } from "@/lib/rounds";
 
@@ -48,6 +48,7 @@ export default function ProgressCharts({ scores }) {
   const [mode, setMode] = useState("raw");
   const [showTrend, setShowTrend] = useState(false);
   const [zoneRound, setZoneRound] = useState(lastRound);
+  const [zoneView, setZoneView] = useState("bar");
   const [avgRound, setAvgRound] = useState(lastRound);
   const [velRound, setVelRound] = useState(lastRound);
   const [goldRound, setGoldRound] = useState(lastRound);
@@ -208,18 +209,50 @@ export default function ProgressCharts({ scores }) {
           <div className="flex flex-wrap items-center gap-3">
             <RoundPicker value={zoneRound} set={setZoneRound} />
             {distData.total > 0 && <span className="text-xs opacity-60">{distData.total} arrows</span>}
+            <div className="flex gap-1 ml-auto">
+              {["bar", "pie"].map(v => (
+                <button key={v} onClick={() => setZoneView(v)}
+                  className="text-xs px-2.5 py-1 rounded-lg border-none cursor-pointer font-medium"
+                  style={{ background: zoneView === v ? "var(--accent)" : "var(--surface-3)", color: zoneView === v ? "var(--accent-foreground)" : "var(--text-secondary)" }}>
+                  {v === "bar" ? "Bar" : "Target"}
+                </button>
+              ))}
+            </div>
           </div>
           {!distData.total ? empty("No arrow data for this round yet.") : (
             <>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={distData.bars} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={grid} />
-                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: tickColor }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={tipStyle} />
-                  <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]}>{distData.bars.map((d) => <Cell key={d.zone} fill={RNG[d.zone] || "var(--accent)"} />)}</Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {zoneView === "bar" ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={distData.bars} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: tickColor }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={tipStyle} />
+                    <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]}>{distData.bars.map((d) => <Cell key={d.zone} fill={RNG[d.zone] || "var(--accent)"} />)}</Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie data={distData.bars.filter(b => b.count > 0)} dataKey="count" nameKey="label"
+                      cx="50%" cy="50%" outerRadius={120} innerRadius={52} paddingAngle={1}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+                        if (percent < 0.03) return null;
+                        const R = Math.PI / 180, pct = Math.round(percent * 100);
+                        if (percent >= 0.07) {
+                          const r = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const x = cx + r * Math.cos(-midAngle * R), y = cy + r * Math.sin(-midAngle * R);
+                          return <text x={x} y={y} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={2.5} paintOrder="stroke" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={700}>{pct}%</text>;
+                        }
+                        const r = outerRadius + 12, x = cx + r * Math.cos(-midAngle * R), y = cy + r * Math.sin(-midAngle * R);
+                        return <text x={x} y={y} fill="var(--text-secondary)" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11}>{name} {pct}%</text>;
+                      }} labelLine={false}>
+                      {distData.bars.filter(b => b.count > 0).map((d) => <Cell key={d.zone} fill={RNG[d.zone] || "var(--accent)"} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tipStyle} formatter={(v) => [`${v} arrows (${distData.total ? Math.round(v / distData.total * 100) : 0}%)`, "Count"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
               <div className="flex flex-wrap gap-2">
                 {distData.bars.filter((b) => b.count > 0).map((b) => (
                   <span key={b.zone} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, background: "var(--surface-2)", fontSize: 12 }}>
