@@ -34,10 +34,6 @@ const GOV_BODIES = [
   { label: "World Archery", value: "WA" },
 ];
 
-function govBody(roundName) {
-  return roundName?.startsWith("WA ") ? "WA" : "AGB";
-}
-
 const MEDALS = ["🥇", "🥈", "🥉"];
 const MEDAL_BG = [
   "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700",
@@ -143,7 +139,7 @@ export default function WorldRecords({ scores }) {
     if (ageGroup.values) result = result.filter((s) => ageGroup.values.includes(s.age_category));
     if (gender.value) result = result.filter((s) => s.gender === gender.value);
     if (bowType.value) result = result.filter((s) => s.bow_type === bowType.value);
-    if (gov.value) result = result.filter((s) => govBody(s.round_name) === gov.value);
+    if (gov.value) result = result.filter((s) => s.gov_body === gov.value);
     return result;
   }, [scores, ageGroup, gender, bowType, gov]);
 
