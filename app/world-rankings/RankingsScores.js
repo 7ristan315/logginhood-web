@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pill } from "@/components/ui";
 import Table from "@/components/ui/Table";
 import { bestClassForBow } from "@/lib/classification";
@@ -109,6 +109,8 @@ export default function RankingsScores({ scores }) {
   const [bowType, setBowType] = useState(BOW_TYPES[0]);
   const [gov, setGov] = useState(GOV_BODIES[0]);
   const [lastOnly, setLastOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   function toggleRound(r) {
     setSelectedRounds((prev) => {
@@ -143,6 +145,11 @@ export default function RankingsScores({ scores }) {
     () => filtered.map((s, i) => ({ ...s, _rank: i + 1 })),
     [filtered]
   );
+
+  useEffect(() => { setPage(1); }, [filtered, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(rankedRows.length / pageSize));
+  const pageRows = rankedRows.slice((page - 1) * pageSize, page * pageSize);
 
   function clearAll() {
     setSelectedRounds(new Set());
@@ -230,12 +237,40 @@ export default function RankingsScores({ scores }) {
 
       <Table
         columns={COLUMNS}
-        rows={rankedRows.slice(0, 25)}
+        rows={pageRows}
         keyField="id"
         caption="World rankings scores"
         emptyState="No scores match these filters."
         striped
       />
+
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--text-secondary)" }}>
+          <span className="opacity-60">Per page:</span>
+          {[25, 50, 100].map(n => (
+            <button key={n} onClick={() => setPageSize(n)}
+              className="px-2.5 py-1 rounded-lg border-none cursor-pointer font-medium"
+              style={{ background: pageSize === n ? "var(--accent)" : "var(--surface-2)", color: pageSize === n ? "var(--accent-foreground)" : "var(--text-secondary)" }}>
+              {n}
+            </button>
+          ))}
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2 text-xs">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+              className="px-2.5 py-1 rounded-lg border-none cursor-pointer"
+              style={{ background: "var(--surface-2)", color: "var(--text-secondary)", opacity: page <= 1 ? 0.4 : 1 }}>
+              ‹
+            </button>
+            <span style={{ color: "var(--text-tertiary)" }}>Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="px-2.5 py-1 rounded-lg border-none cursor-pointer"
+              style={{ background: "var(--surface-2)", color: "var(--text-secondary)", opacity: page >= totalPages ? 0.4 : 1 }}>
+              ›
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
