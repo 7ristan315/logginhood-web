@@ -6,6 +6,30 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 const COLORS = ["#2f6f4f", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#e85d75", "#059669", "#ca8a04", "#6366f1", "#475569", "#c026d3"];
 const tooltipStyle = { backgroundColor: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
 
+const RAD = Math.PI / 180;
+// % inside the slice (white with a dark outline so it reads on any colour); tiny slices
+// fall back to an outside "name %" label so they don't get squashed against the ring.
+function renderSliceLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) {
+  if (percent < 0.03) return null;
+  const pct = Math.round(percent * 100);
+  if (percent >= 0.06) {
+    const r = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + r * Math.cos(-midAngle * RAD);
+    const y = cy + r * Math.sin(-midAngle * RAD);
+    return (
+      <text x={x} y={y} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={2.6} paintOrder="stroke"
+        textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={700}>{pct}%</text>
+    );
+  }
+  const r = outerRadius + 12;
+  const x = cx + r * Math.cos(-midAngle * RAD);
+  const y = cy + r * Math.sin(-midAngle * RAD);
+  return (
+    <text x={x} y={y} fill="var(--text-secondary)" textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central" fontSize={11}>{`${name} ${pct}%`}</text>
+  );
+}
+
 export default function MarketDrilldown({ marketShare, equipPerf }) {
   const [category, setCategory] = useState("riser");
   const [drillPath, setDrillPath] = useState([]);
@@ -140,11 +164,10 @@ export default function MarketDrilldown({ marketShare, equipPerf }) {
           <div>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={50}
+                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} innerRadius={48}
                   paddingAngle={1} style={{ cursor: "pointer" }}
                   onClick={(_, i) => drill(chartData[i]?.name)}
-                  label={({ name, percent }) => percent > 0.04 ? `${name} ${Math.round(percent * 100)}%` : ""}
-                  labelLine={{ strokeWidth: 0.5 }}>
+                  label={renderSliceLabel} labelLine={false}>
                   {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} style={{ cursor: "pointer" }} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} formatter={(v, name) => [`${v} archers (${totalArchers > 0 ? Math.round(v / totalArchers * 100) : 0}%)`, name]} />
