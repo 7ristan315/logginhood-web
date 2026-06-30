@@ -37,7 +37,7 @@ const TABS = [
 ];
 
 function TargetFaceSVG({ bars, total }) {
-  const S = 280, c = 140, R = 120;
+  const S = 220, c = 110, R = 100;
   const active = bars.filter(b => b.count > 0).map(b => ({ z: b.zone, display: b.label, color: RNG[b.zone] || "#4caf50", count: b.count }));
   if (!active.length) return null;
   const tot = total || active.reduce((s, r) => s + r.count, 0);
@@ -45,19 +45,36 @@ function TargetFaceSVG({ bars, total }) {
   const rings = active.map(r => { const p = r.count / tot, iR = R * cum; cum += p; const oR = R * cum; return { ...r, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
   const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
   return (
-    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto" }}>
-      {[...rings].reverse().map(r => <circle key={r.z} cx={c} cy={c} r={r.oR} fill={r.color} />)}
-      {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />)}
-      {rings.map(r => {
-        const w = r.oR - r.iR, fs = Math.max(9, Math.min(13, w * 0.5)), y = c - r.mR;
-        if (w < 12) return null;
-        const two = w >= 22;
-        return <g key={"l" + r.z}>
-          {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{r.display}</text>}
-          <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
-        </g>;
-      })}
-    </svg>
+    <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
+      <svg viewBox={`0 0 ${S} ${S}`} style={{ width: S, height: S, flexShrink: 0, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
+        {[...rings].reverse().map(r => <circle key={r.z} cx={c} cy={c} r={r.oR} fill={r.color} />)}
+        {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} />)}
+        <circle cx={c} cy={c} r={R} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={1} />
+        {rings.map(r => {
+          const w = r.oR - r.iR, fs = Math.max(9, Math.min(12, w * 0.55)), y = c - r.mR;
+          if (w < 10) return null;
+          const two = w >= 20;
+          return <g key={"l" + r.z}>
+            {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{r.display}</text>}
+            <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
+          </g>;
+        })}
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, minWidth: 110 }}>
+        {rings.map(r => (
+          <div key={r.z} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ width: 11, height: 11, borderRadius: 3, background: r.color, flexShrink: 0, border: "1px solid rgba(0,0,0,0.1)" }} />
+            <span style={{ fontWeight: 700, minWidth: 24, color: "var(--text-primary)" }}>{r.display}</span>
+            <span style={{ color: "var(--text-tertiary)", flex: 1, textAlign: "right" }}>{r.count}</span>
+            <span style={{ fontWeight: 600, color: "var(--text-primary)", minWidth: 32, textAlign: "right" }}>{r.pct}%</span>
+          </div>
+        ))}
+        <div style={{ marginTop: 2, paddingTop: 4, borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: "var(--text-tertiary)" }}>
+          <span style={{ flex: 1 }}>Total</span>
+          <span style={{ fontWeight: 600 }}>{tot}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -259,13 +276,15 @@ export default function ProgressCharts({ scores }) {
               ) : (
                 <TargetFaceSVG bars={distData.bars} total={distData.total} />
               )}
-              <div className="flex flex-wrap gap-2">
-                {distData.bars.filter((b) => b.count > 0).map((b) => (
-                  <span key={b.zone} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, background: "var(--surface-2)", fontSize: 12 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: RNG[b.zone] || "var(--accent)" }} /><b>{b.label}</b><span className="opacity-60">{b.count} ({b.pct}%)</span>
-                  </span>
-                ))}
-              </div>
+              {zoneView === "bar" && (
+                <div className="flex flex-wrap gap-2">
+                  {distData.bars.filter((b) => b.count > 0).map((b) => (
+                    <span key={b.zone} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, background: "var(--surface-2)", fontSize: 12 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, background: RNG[b.zone] || "var(--accent)" }} /><b>{b.label}</b><span className="opacity-60">{b.count} ({b.pct}%)</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>

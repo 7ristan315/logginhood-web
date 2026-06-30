@@ -25,7 +25,7 @@ const BANDS = [
 const ZONE_ORDER = ["X","10","9","8","7","6","5","4","3","2","1","M"];
 
 function TargetFaceSVG({ data, total }) {
-  const S = 280, c = 140, R = 120;
+  const S = 220, c = 110, R = 100;
   const active = data.filter(d => d.value > 0);
   if (!active.length) return null;
   const tot = total || active.reduce((s, d) => s + d.value, 0);
@@ -33,13 +33,14 @@ function TargetFaceSVG({ data, total }) {
   const rings = active.map(d => { const p = d.value / tot, iR = R * cum; cum += p; const oR = R * cum; return { ...d, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
   const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
   return (
-    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto" }}>
+    <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: S, display: "block", margin: "0 auto", filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.2))" }}>
       {[...rings].reverse().map(r => <circle key={r.name} cx={c} cy={c} r={r.oR} fill={r.color} />)}
-      {rings.slice(0, -1).map(r => <circle key={"s" + r.name} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />)}
+      {rings.slice(0, -1).map(r => <circle key={"s" + r.name} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} />)}
+      <circle cx={c} cy={c} r={R} fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth={1} />
       {rings.map(r => {
-        const w = r.oR - r.iR, fs = Math.max(9, Math.min(13, w * 0.5)), y = c - r.mR;
-        if (w < 12) return null;
-        const two = w >= 22, lbl = r.name.split(/\s/)[0];
+        const w = r.oR - r.iR, fs = Math.max(9, Math.min(12, w * 0.55)), y = c - r.mR;
+        if (w < 10) return null;
+        const two = w >= 20, lbl = r.name.split(/\s/)[0];
         return <g key={"l" + r.name}>
           {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{lbl}</text>}
           <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
