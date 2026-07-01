@@ -37,26 +37,32 @@ const TABS = [
 ];
 
 function TargetFaceSVG({ bars, total }) {
-  const S = 220, c = 110, R = 100;
+  const S = 660, c = 330, R = 300;
   const active = bars.filter(b => b.count > 0).map(b => ({ z: b.zone, display: b.label, color: RNG[b.zone] || "#4caf50", count: b.count }));
   if (!active.length) return null;
   const tot = total || active.reduce((s, r) => s + r.count, 0);
   let cum = 0;
   const rings = active.map(r => { const p = r.count / tot, iR = R * cum; cum += p; const oR = R * cum; return { ...r, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
-  const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.5)", strokeWidth: 2.5, paintOrder: "stroke", fontWeight: 700 };
+  const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.55)", strokeWidth: 3, paintOrder: "stroke", fontWeight: 700 };
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
-      <svg viewBox={`0 0 ${S} ${S}`} style={{ width: S, height: S, flexShrink: 0, filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
+      <svg viewBox={`0 0 ${S} ${S}`} style={{ width: "min(100%, 640px)", height: "auto", aspectRatio: "1 / 1", flexShrink: 0, filter: "drop-shadow(0 8px 30px rgba(0,0,0,0.3))" }}>
         {[...rings].reverse().map(r => <circle key={r.z} cx={c} cy={c} r={r.oR} fill={r.color} />)}
-        {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} />)}
-        <circle cx={c} cy={c} r={R} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={1} />
-        {rings.map(r => {
-          const w = r.oR - r.iR, fs = Math.max(9, Math.min(12, w * 0.55)), y = c - r.mR;
-          if (w < 10) return null;
-          const two = w >= 20;
+        {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} />)}
+        <circle cx={c} cy={c} r={R} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth={1.5} />
+        {rings.map((r, i) => {
+          const w = r.oR - r.iR, fs = Math.max(12, Math.min(26, w * 0.4));
+          if (i === 0) return (
+            <g key={"l" + r.z}>
+              <text {...ts} x={c} y={c - fs * 0.55} fontSize={fs}>{r.display}</text>
+              <text {...ts} x={c} y={c + fs * 0.6} fontSize={fs * 0.8} fontWeight={600}>{r.pct}%</text>
+            </g>
+          );
+          if (w < R * 0.04) return null;
+          const two = w >= R * 0.075, y = c - r.mR;
           return <g key={"l" + r.z}>
-            {two && <text {...ts} x={c} y={y - 6} fontSize={fs}>{r.display}</text>}
-            <text {...ts} x={c} y={two ? y + 6 : y} fontSize={fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
+            {two && <text {...ts} x={c} y={y - fs * 0.55} fontSize={fs}>{r.display}</text>}
+            <text {...ts} x={c} y={two ? y + fs * 0.6 : y} fontSize={two ? fs * 0.8 : fs} fontWeight={two ? 600 : 700}>{r.pct}%</text>
           </g>;
         })}
       </svg>
