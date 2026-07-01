@@ -11,8 +11,8 @@ export default function PlatformOverview({ stats, equipPerf, marketShare, filter
   const riserShare = useMemo(() => {
     const byRiser = {};
     (filtered.market || []).forEach(r => {
-      const key = r.riser || "Other";
-      byRiser[key] = (byRiser[key] || 0) + r.archer_count;
+      if (!r.riser) return; // market_share is long-format: skip non-riser dimension rows
+      byRiser[r.riser] = (byRiser[r.riser] || 0) + r.archer_count;
     });
     return Object.entries(byRiser)
       .map(([name, value]) => ({ name: name.length > 16 ? name.slice(0, 14) + "…" : name, value }))
