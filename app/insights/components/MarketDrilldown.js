@@ -6,6 +6,7 @@ import { renderSliceLabel } from "./pieLabel";
 
 const COLORS = ["#2f6f4f", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#e85d75", "#059669", "#ca8a04", "#6366f1", "#475569", "#c026d3"];
 const tooltipStyle = { backgroundColor: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
+const K_ANON = 10; // k-anonymity floor: sub-threshold products roll into "Other" and can't be drilled into. Brand totals stay whole.
 
 export default function MarketDrilldown({ marketShare, equipPerf }) {
   const [category, setCategory] = useState("riser");
@@ -50,9 +51,21 @@ export default function MarketDrilldown({ marketShare, equipPerf }) {
         byProduct[val].archers += r.archer_count || 0;
         byProduct[val].rounds += r.round_count || 0;
       });
-      return Object.values(byProduct)
+      const products = Object.values(byProduct);
+      const rows = products
+        .filter(p => p.archers >= K_ANON)
         .map(p => ({ name: p.name.length > 25 ? p.name.slice(0, 23) + "…" : p.name, fullName: p.name, value: p.archers, rounds: p.rounds }))
         .sort((a, b) => b.value - a.value);
+      const small = products.filter(p => p.archers < K_ANON);
+      if (small.length) {
+        rows.push({
+          name: `Other (<${K_ANON} archers)`,
+          value: small.reduce((s, p) => s + p.archers, 0),
+          rounds: small.reduce((s, p) => s + p.rounds, 0),
+          _other: true,
+        });
+      }
+      return rows;
     }
 
     if (drillPath.length === 2) {
@@ -81,10 +94,10 @@ export default function MarketDrilldown({ marketShare, equipPerf }) {
   const totalArchers = chartData.reduce((s, d) => s + (d.value || 0), 0);
 
   function drill(name) {
-    if (drillPath.length < 2) {
-      const fullName = chartData.find(d => d.name === name)?.fullName || name;
-      setDrillPath([...drillPath, fullName]);
-    }
+    if (drillPath.length >= 2) return;
+    const row = chartData.find(d => d.name === name);
+    if (row?._other) return; // can't drill into the suppressed small-group bucket
+    setDrillPath([...drillPath, row?.fullName || name]);
   }
 
   function navigateUp(level) {
