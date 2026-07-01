@@ -45,7 +45,7 @@ function TargetFaceSVG({ bars, total }) {
   const rings = active.map(r => { const p = r.count / tot, iR = R * cum; cum += p; const oR = R * cum; return { ...r, pct: Math.round(p * 100), iR, oR, mR: (iR + oR) / 2 }; });
   const ts = { textAnchor: "middle", dominantBaseline: "central", fill: "#fff", stroke: "rgba(0,0,0,0.55)", strokeWidth: 3, paintOrder: "stroke", fontWeight: 700 };
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
       <svg viewBox={`0 0 ${S} ${S}`} style={{ width: "min(100%, 640px)", height: "auto", aspectRatio: "1 / 1", flexShrink: 0, filter: "drop-shadow(0 8px 30px rgba(0,0,0,0.3))" }}>
         {[...rings].reverse().map(r => <circle key={r.z} cx={c} cy={c} r={r.oR} fill={r.color} />)}
         {rings.slice(0, -1).map(r => <circle key={"s" + r.z} cx={c} cy={c} r={r.oR} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} />)}
