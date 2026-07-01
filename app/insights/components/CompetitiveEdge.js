@@ -6,18 +6,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const COLORS = ["var(--chart-1)", "var(--chart-3)"];
 const tooltipStyle = { backgroundColor: "var(--surface-1)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
 
-export default function CompetitiveEdge({ equipPerf, filtered }) {
+export default function CompetitiveEdge({ competitive }) {
   const compVsPractice = useMemo(() => {
     const byStatus = { Competition: {}, Practice: {} };
-    (filtered.equip || []).forEach(r => {
+    (competitive || []).forEach(r => {
       const riser = r.riser || "Unknown";
-      if (riser === "Unknown") return;
-      ["Competition", "Practice"].forEach(status => {
-        if (!byStatus[status][riser]) byStatus[status][riser] = { total: 0, count: 0, stddev: 0 };
-        byStatus[status][riser].total += r.avg_score * r.sample_size;
-        byStatus[status][riser].count += r.sample_size;
-        byStatus[status][riser].stddev += (r.score_stddev || 0) * r.sample_size;
-      });
+      if (riser === "Unknown" || !byStatus[r.status]) return;
+      const bucket = byStatus[r.status];
+      if (!bucket[riser]) bucket[riser] = { total: 0, count: 0, stddev: 0 };
+      bucket[riser].total += r.avg_score * r.sample_size;
+      bucket[riser].count += r.sample_size;
+      bucket[riser].stddev += (r.score_stddev || 0) * r.sample_size;
     });
     const risers = [...new Set([...Object.keys(byStatus.Competition), ...Object.keys(byStatus.Practice)])];
     return risers
@@ -31,7 +30,7 @@ export default function CompetitiveEdge({ equipPerf, filtered }) {
       }))
       .sort((a, b) => b.comp - a.comp)
       .slice(0, 10);
-  }, [filtered.equip]);
+  }, [competitive]);
 
   const pressurePerformers = useMemo(() => {
     return compVsPractice

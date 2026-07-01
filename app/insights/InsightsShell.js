@@ -46,7 +46,7 @@ function LockedSection({ tier }) {
   );
 }
 
-export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog, zoneDist, tier = "admin", allowedSections, companyName, brandFilter }) {
+export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, marketShare, journey, switching, catalog, zoneDist, competitive, tier = "admin", allowedSections, companyName, brandFilter }) {
   const [section, setSection] = useState("overview");
   const [filters, setFilters] = useState({});
   const allowed = new Set(allowedSections || ["overview", "products", "market", "demographics", "arrows", "journey", "competitive", "methodology"]);
@@ -57,7 +57,8 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
     arrows: applyFilters(arrowPerf, filters),
     market: applyFilters(marketShare, filters),
     journey: applyFilters(journey, filters),
-  }), [equipPerf, setupDna, arrowPerf, marketShare, journey, filters]);
+    competitive: applyFilters(competitive, filters),
+  }), [equipPerf, setupDna, arrowPerf, marketShare, journey, competitive, filters]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -115,7 +116,7 @@ export default function InsightsShell({ stats, equipPerf, setupDna, arrowPerf, m
       ) : <LockedSection tier={tier} />)}
 
       {section === "competitive" && (allowed.has("competitive") ? (
-        <CompetitiveEdge equipPerf={equipPerf} filtered={filtered} />
+        <CompetitiveEdge competitive={filtered.competitive} />
       ) : <LockedSection tier={tier} />)}
 
       {section === "methodology" && (

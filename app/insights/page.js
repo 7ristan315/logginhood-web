@@ -82,6 +82,7 @@ export default async function InsightsPage() {
     { data: switching },
     { data: catalog },
     { data: zoneDist },
+    { data: competitive },
   ] = await Promise.all([
     supabase.from("insights_platform_stats").select("*").single(),
     supabase.from("insights_equipment_performance").select("*").order("sample_size", { ascending: false }).limit(500),
@@ -92,6 +93,7 @@ export default async function InsightsPage() {
     supabase.from("insights_switching_events").select("*").limit(500),
     supabase.from("equipment_catalog").select("category, brand, model").order("brand").order("model"),
     supabase.from("insights_zone_distribution").select("*").order("arrow_count", { ascending: false }).limit(500),
+    supabase.from("insights_competitive_edge").select("*").order("sample_size", { ascending: false }).limit(500),
   ]);
 
   return (
@@ -106,6 +108,7 @@ export default async function InsightsPage() {
         switching={switching || []}
         catalog={catalog || []}
         zoneDist={zoneDist || []}
+        competitive={competitive || []}
         tier={tier}
         allowedSections={allowedSections}
         companyName={membership.company_name}
