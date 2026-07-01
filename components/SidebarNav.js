@@ -11,13 +11,16 @@ import Avatar from "./ui/Avatar";
 const BOW_ICON = { Recurve: "🏹", Compound: "⚙️", Barebow: "🎯", Longbow: "🌲" };
 
 const NAV_ITEMS = [
+  // Personal
   { href: "/dashboard",       icon: "◈",  key: "nav.dashboard" },
   { href: "/history",         icon: "≡",  key: "nav.history" },
   { href: "/progress",        icon: "∿",  key: "nav.progress" },
+  // Community
   { href: "/my-club",         icon: "⌂",  key: "nav.myClub" },
   { href: "/competitions",    icon: "◉",  key: "nav.competitions" },
+  // Discover
   { href: "/world-rankings",  icon: "⊕",  key: "nav.worldRankings" },
-  { href: "/clubs",           icon: "◎",  key: "nav.clubs" },
+  { href: "/clubs",           icon: "◎",  label: "Find a Club" },
   { href: "/insights",        icon: "◆",  label: "Insights" },
 ];
 
@@ -31,18 +34,19 @@ const BOTTOM_BAR_ITEMS = [
 
 const MORE_ITEMS = [
   { href: "/world-rankings",  icon: "⊕",  label: "World Rankings" },
-  { href: "/clubs",           icon: "◎",  label: "Clubs" },
+  { href: "/clubs",           icon: "◎",  label: "Find a Club" },
+  { href: "/insights",        icon: "◆",  label: "Insights" },
   { href: "/my-setup",        icon: "🏹", label: "My Setup" },
   { href: "/import",          icon: "⬆",  label: "Import Scores" },
   { href: "/profile",         icon: "👤", label: "Profile" },
   { href: "/settings",        icon: "⚙",  label: "Settings" },
-  { href: "/features",        icon: "✦",  label: "All Features" },
 ];
 
 const LOGGED_OUT_ITEMS = [
-  { href: "/features",  label: "Features" },
-  { href: "/clubs",     label: "Clubs" },
-  { href: "/login",     label: "Log in" },
+  { href: "/features",        label: "Features" },
+  { href: "/world-rankings",  label: "Rankings" },
+  { href: "/clubs",           label: "Clubs" },
+  { href: "/login",           label: "Log in" },
 ];
 
 function Initials({ name }) {
